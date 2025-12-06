@@ -23,6 +23,7 @@ const categoryColors = {
 };
 
 export default function RecordList({ records }) {
+  // Hari ini buat setiap record
   const today = new Date().toLocaleDateString("id-ID", {
     day: "2-digit",
     month: "long",
@@ -30,7 +31,11 @@ export default function RecordList({ records }) {
   });
 
   return (
-    <div className="overflow-y-auto flex-1 space-y-3 pr-2">
+    <div className="overflow-y-auto flex-1 space-y-3 pr-2 max-h-[calc(100vh-150px)]">
+      {records.length === 0 && (
+        <p className="text-white/50 text-center mt-4">Belum ada record</p>
+      )}
+
       {records.map((r, idx) => (
         <div
           key={idx}
@@ -38,6 +43,7 @@ export default function RecordList({ records }) {
             flex items-center gap-4 p-4 rounded-2xl
             bg-white/10 backdrop-blur-xl border border-white/10
             shadow-[0_0_20px_rgba(255,255,255,0.05)]
+            hover:scale-105 transition-all duration-200
           "
         >
           {/* Icon */}
@@ -55,13 +61,11 @@ export default function RecordList({ records }) {
           <div className="flex-1">
             <p className="font-semibold text-white">{r.title}</p>
             <p className="text-white/60 text-sm">{r.category}</p>
-
-            {/* Tanggal Hari Ini */}
             <p className="text-white/40 text-xs mt-1">{today}</p>
           </div>
 
           {/* Amount */}
-          <div className="font-semibold text-yellow-300">
+          <div className={`font-semibold ${r.type === "Income" ? "text-green-300" : "text-red-400"}`}>
             Rp {Number(r.amount).toLocaleString("id-ID")}
           </div>
         </div>
