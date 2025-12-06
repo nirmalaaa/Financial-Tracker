@@ -12,13 +12,15 @@ export default function Dashboard() {
 
   const handleAddRecord = (rec) => setRecords((prev) => [...prev, rec]);
 
+  const incomeCategories = ["Gaji", "Bonus", "Investasi", "Part-Time"];
   const totalIncome = records
-    .filter((r) => ["Salary", "Bonus"].includes(r.category))
+    .filter((r) => incomeCategories.includes(r.category))
     .reduce((sum, r) => sum + r.amount, 0);
 
   const totalExpense = records
-    .filter((r) => !["Salary", "Bonus"].includes(r.category))
+    .filter((r) => !incomeCategories.includes(r.category))
     .reduce((sum, r) => sum + r.amount, 0);
+
 
   const totalAll = totalIncome + totalExpense;
   const incomePercent = totalAll ? Math.round((totalIncome / totalAll) * 100) : 0;
@@ -32,7 +34,14 @@ export default function Dashboard() {
       <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-yellow-500/10 blur-[200px]"></div>
 
       {/* Sidebar */}
-      <Sidebar onAdd={() => setIsModalOpen(true)} />
+      <Sidebar
+          onAdd={() => setIsModalOpen(true)}
+          onLogout={() => {
+            setUser(null);
+            localStorage.removeItem("currentUser");
+          }}
+        />
+
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col ml-28 relative z-10">
@@ -103,7 +112,7 @@ export default function Dashboard() {
             p-5 flex flex-col gap-6
           ">
             <div className="flex justify-between items-center">
-              <p className="text-white font-medium">Income</p>
+              <p className="text-white font-medium">Pemasukan</p>
               <p className="text-white font-medium">{incomePercent}%</p>
             </div>
             <div className="w-full bg-white/10 h-2 rounded-full">
@@ -114,7 +123,7 @@ export default function Dashboard() {
             </div>
 
             <div className="flex justify-between items-center mt-4">
-              <p className="text-white font-medium">Expense</p>
+              <p className="text-white font-medium">Pengeluaran</p>
               <p className="text-white font-medium">{expensePercent}%</p>
             </div>
             <div className="w-full bg-white/10 h-2 rounded-full">
