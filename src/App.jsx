@@ -1,39 +1,56 @@
 import { useState } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
-import Home from "./pages/Dashboard";      
 import Wallet from "./pages/Wallet";
 import ChartPage from "./pages/Chart";
 import Settings from "./pages/Settings";
+import Sidebar from "./components/Sidebar"; // import Sidebar
 
 export default function App() {
   const [user, setUser] = useState(null);
 
+  const handleAdd = () => {
+    console.log("Add clicked");
+  };
+
   return (
     <Router>
+      {/* Sidebar muncul hanya jika user login */}
+      {user && <Sidebar onAdd={handleAdd} onLogout={() => setUser(null)} />}
+
       <Routes>
+        {/* Route login */}
+        <Route
+          path="/"
+          element={!user ? <Login setUser={setUser} /> : <Navigate to="/dashboard" replace />}
+        />
 
-        {/* Jika belum login → hanya bisa akses Login & SignUp */}
-        {!user && (
-          <>
-            <Route path="/" element={<Login setUser={setUser} />} />
-            <Route path="/signup" element={<SignUp />} />
-          </>
-        )}
+        {/* Route signup */}
+        <Route path="/signup" element={<SignUp />} />
 
-        {/* Jika sudah login → semua page bisa dibuka */}
-        {user && (
-          <>
-            <Route path="/" element={<Dashboard />} />     
-            <Route path="/wallet" element={<Wallet />} />
-            <Route path="/chart" element={<ChartPage />} />
-            <Route path="/settings" element={<Settings />} />
-          </>
-        )}
+        {/* Protected routes */}
+        <Route
+          path="/dashboard"
+          element={user ? <Dashboard /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/wallet"
+          element={user ? <Wallet /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/chart"
+          element={user ? <ChartPage /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/settings"
+          element={user ? <Settings /> : <Navigate to="/" replace />}
+        />
 
+        {/* Catch all */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );

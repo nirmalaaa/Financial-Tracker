@@ -23,6 +23,12 @@ const categoryColors = {
 };
 
 export default function RecordList({ records }) {
+  const today = new Date().toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+
   return (
     <div className="overflow-y-auto flex-1 space-y-3 pr-2">
       {records.map((r, idx) => (
@@ -45,10 +51,13 @@ export default function RecordList({ records }) {
             {categoryIcons[r.category] || <FaMoneyBill />}
           </div>
 
-          {/* Title + Category */}
+          {/* Info */}
           <div className="flex-1">
             <p className="font-semibold text-white">{r.title}</p>
             <p className="text-white/60 text-sm">{r.category}</p>
+
+            {/* Tanggal Hari Ini */}
+            <p className="text-white/40 text-xs mt-1">{today}</p>
           </div>
 
           {/* Amount */}
