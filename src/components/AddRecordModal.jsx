@@ -26,21 +26,21 @@ export default function AddRecordModal({ isOpen, onClose, onAdd }) {
   const today = new Date().toISOString().split("T")[0];
 
   const incomeCategories = [
-    { name: "Gaji", color: "#34d399", icon: <FaMoneyBillWave /> },
-    { name: "Bonus", color: "#facc15", icon: <FaMoneyCheckAlt /> },
-    { name: "Investasi", color: "#fb4774", icon: <FaChartLine /> },
-    { name: "Part-Time", color: "#d04eff", icon: <FaUserClock /> },
+    { name: "Gaji", color: "#34d399", icon: <FaMoneyBillWave />, sfx: "/sfx/coin.mp3" },
+    { name: "Bonus", color: "#facc15", icon: <FaMoneyCheckAlt />, sfx: "/sfx/coin-recieved.mp3" },
+    { name: "Investasi", color: "#fb4774", icon: <FaChartLine />, sfx: "/sfx/coin.mp3" },
+    { name: "Part-Time", color: "#d04eff", icon: <FaUserClock />, sfx: "/sfx/coin.mp3" },
   ];
 
   const expenseCategories = [
-    { name: "Makanan", color: "#fbbf24", icon: <FaUtensils /> },
-    { name: "Transportasi", color: "#60a5fa", icon: <FaCar /> },
-    { name: "Belanja", color: "#f87171", icon: <FaShoppingCart /> },
-    { name: "Hiburan", color: "#f472b6", icon: <FaGamepad /> },
-    { name: "Kesehatan", color: "#34d399", icon: <FaHeart /> },
-    { name: "Hadiah", color: "#a78bfa", icon: <FaGift /> },
-    { name: "Edukasi", color: "#fcd34d", icon: <FaBook /> },
-    { name: "Groceries", color: "#86efac", icon: <FaShoppingBasket /> },
+    { name: "Makanan", color: "#fbbf24", icon: <FaUtensils />, sfx: "/sfx/food.mp3" },
+    { name: "Transportasi", color: "#60a5fa", icon: <FaCar />, sfx: "/sfx/transport.mp3" },
+    { name: "Belanja", color: "#f87171", icon: <FaShoppingCart />, sfx: "/sfx/shopping.mp3" },
+    { name: "Hiburan", color: "#f472b6", icon: <FaGamepad />, sfx: "/sfx/fun.mp3" },
+    { name: "Kesehatan", color: "#34d399", icon: <FaHeart />, sfx: "/sfx/health.mp3" },
+    { name: "Hadiah", color: "#a78bfa", icon: <FaGift />, sfx: "/sfx/gift.mp3" },
+    { name: "Edukasi", color: "#fcd34d", icon: <FaBook />, sfx: "/sfx/education.mp3" },
+    { name: "Groceries", color: "#86efac", icon: <FaShoppingBasket />, sfx: "/sfx/groceries.mp3" },
   ];
 
   if (!isOpen) return null;
@@ -58,6 +58,10 @@ export default function AddRecordModal({ isOpen, onClose, onAdd }) {
 
   const handleDone = () => {
     if (!selectedCategory || !mainTitle) return;
+
+    const audio = new Audio(selectedCategory.sfx);
+    audio.currentTime = 0;
+    audio.play();
 
     if (tab === "income") {
       onAdd({
@@ -86,6 +90,7 @@ export default function AddRecordModal({ isOpen, onClose, onAdd }) {
     reset();
     onClose();
   };
+
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-xl z-50">
@@ -198,47 +203,64 @@ export default function AddRecordModal({ isOpen, onClose, onAdd }) {
             </div>
 
             {/* SubItems → Expenses */}
-            <div className="min-w-full flex flex-col gap-3">
-              {subItems.map((item, idx) => (
-                <div key={idx} className="flex gap-2">
-                  <input
-                    placeholder="Keterangan"
-                    value={item.subtitle}
-                    onChange={(e) => {
-                      const newItems = [...subItems];
-                      newItems[idx].subtitle = e.target.value;
-                      setSubItems(newItems);
-                    }}
-                    className="flex-1 p-2 rounded-xl bg-white/5 border border-white/10"
-                  />
-                  <input
-                    placeholder="Harga (Rp)"
-                    type="number"
-                    value={item.amount}
-                    onChange={(e) => {
-                      const newItems = [...subItems];
-                      newItems[idx].amount = e.target.value;
-                      setSubItems(newItems);
-                    }}
-                    className="w-28 p-2 rounded-xl bg-white/5 border border-white/10"
-                  />
-                </div>
-              ))}
-              <div className="flex gap-3 mt-4">
-                <button
-                  onClick={() => setSubItems([...subItems, { subtitle: "", amount: "" }])}
-                  className="flex-1 p-3 bg-yellow-400 rounded-xl text-black font-bold hover:bg-yellow-500"
-                >
-                  + Tambah
-                </button>
-                <button
-                  onClick={handleDone}
-                  className="flex-1 p-3 bg-green-400 rounded-xl text-black font-bold hover:bg-green-500"
-                >
-                  Selesai
-                </button>
+            <div className="min-w-full flex flex-col gap-4 relative h-full">
+
+              {/* Scroll Wrapper */}
+              <div className="flex flex-col gap-4 max-h-[400px] overflow-y-auto pr-1 pb-24">
+                {subItems.map((item, idx) => (
+                  <div key={idx} className="flex gap-2">
+                    <input
+                      placeholder="Keterangan"
+                      value={item.subtitle}
+                      onChange={(e) => {
+                        const newItems = [...subItems];
+                        newItems[idx].subtitle = e.target.value;
+                        setSubItems(newItems);
+                      }}
+                      className="flex-1 p-3 rounded-xl bg-white/5 border border-white/10"
+                    />
+                    <input
+                      placeholder="Harga (Rp)"
+                      type="number"
+                      value={item.amount}
+                      onChange={(e) => {
+                        const newItems = [...subItems];
+                        newItems[idx].amount = e.target.value;
+                        setSubItems(newItems);
+                      }}
+                      className="w-32 p-3 rounded-xl bg-white/5 border border-white/10"
+                    />
+                  </div>
+                ))}
               </div>
+
+              {/* Floating Buttons (Elegan, bukan FAB) */}
+              <div className="absolute bottom-0 left-0 w-full px-4 pb-4 bg-gradient-to-t from-black/20 to-transparent pt-4">
+                <div className="flex gap-3">
+
+                  <button
+                    onClick={() => setSubItems([...subItems, { subtitle: "", amount: "" }])}
+                    className="flex-1 py-3 rounded-2xl font-bold text-black
+                    bg-yellow-400 shadow-md shadow-yellow-300/30 border border-yellow-500/30
+                    hover:bg-yellow-500 hover:shadow-yellow-400/40 transition-all"
+                  >
+                    + Tambah
+                  </button>
+
+                  <button
+                    onClick={handleDone}
+                    className="flex-1 py-3 rounded-2xl font-bold text-black
+                    bg-green-400 shadow-md shadow-green-300/30 border border-green-500/30
+                    hover:bg-green-500 hover:shadow-green-400/40 transition-all"
+                  >
+                    Selesai
+                  </button>
+
+                </div>
+              </div>
+
             </div>
+
 
           </div>
         </div>
