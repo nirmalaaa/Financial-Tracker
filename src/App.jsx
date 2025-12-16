@@ -1,36 +1,21 @@
-import { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import './App.css';
+import LoginForm from './components/LoginForm';
+import SignUpForm from './components/SignUpForm';
+import Dashboard from './components/Dashboard';
+import Analytics from './components/Analytics';
 
-import Dashboard from "./pages/Dashboard";
-import Login from "./pages/Login";
-import SignUp from "./pages/SignUp";
-
-export default function App() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); // <-- tunggu localStorage
-
-  useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem("currentUser"));
-    if (storedUser) setUser(storedUser);
-    setLoading(false); // selesai cek
-  }, []);
-
-  if (loading) return null; // atau loader
-
+function App() {
   return (
-    <Router>
+    <BrowserRouter>
       <Routes>
-        <Route
-          path="/"
-          element={!user ? <Login setUser={setUser} /> : <Navigate to="/dashboard" replace />}
-        />
-        <Route path="/signup" element={<SignUp />} />
-        <Route
-          path="/dashboard"
-          element={user ? <Dashboard setUser={setUser} /> : <Navigate to="/" replace />}
-        />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/" element={<LoginForm />} />
+        <Route path="/signup" element={<SignUpForm />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/analytics" element={<Analytics />} />
       </Routes>
-    </Router>
+    </BrowserRouter>
   );
 }
+
+export default App;
