@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Star, Sparkles, Mail, Lock } from 'lucide-react';
+import { Star, Sparkles, Mail, Lock, LogIn, UserPlus, Zap, Trophy, Target, Gift } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './LoginForm.css';
 
 const LoginForm = () => {
-  const navigate = useNavigate(); // INI YANG DITAMBAHKAN
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -36,7 +36,6 @@ const LoginForm = () => {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      // REDIRECT KE DASHBOARD
       navigate('/dashboard');
     }, 1500);
   };
@@ -48,12 +47,16 @@ const LoginForm = () => {
       <Star className="star-decoration star-2" size={16} />
       <Sparkles className="star-decoration star-3" size={18} />
       <Star className="star-decoration star-4" size={22} />
+      <Sparkles className="star-decoration star-5" size={20} />
+      <Star className="star-decoration star-6" size={18} />
 
       {/* Main Content */}
       <div className="login-content">
-        {/* Header */}
+        {/* Header with Icon */}
         <div className="circus-header">
-          <div className="circus-tent">🎪</div>
+          <div className="circus-icon-wrapper">
+            <Zap size={50} />
+          </div>
           <h1 className="circus-title">WELCOME BACK</h1>
           <p className="circus-subtitle">Sign in to continue</p>
         </div>
@@ -63,14 +66,19 @@ const LoginForm = () => {
           {/* Error Message */}
           {error && (
             <div className="error-message">
-              <span>⚠️ {error}</span>
+              <div className="error-icon-wrapper">
+                <Sparkles size={18} />
+              </div>
+              <span>{error}</span>
             </div>
           )}
 
           {/* Email Field */}
           <div className="form-group">
             <label className="form-label">
-              <Mail size={14} style={{ display: 'inline', marginRight: '6px' }} />
+              <div className="label-icon-wrapper email">
+                <Mail size={14} />
+              </div>
               Email Address
             </label>
             <input
@@ -86,7 +94,9 @@ const LoginForm = () => {
           {/* Password Field */}
           <div className="form-group">
             <label className="form-label">
-              <Lock size={14} style={{ display: 'inline', marginRight: '6px' }} />
+              <div className="label-icon-wrapper password">
+                <Lock size={14} />
+              </div>
               Password
             </label>
             <input
@@ -105,9 +115,9 @@ const LoginForm = () => {
               onClick={handleSubmit}
               className={`circus-btn btn-primary ${loading ? 'btn-loading' : ''}`}
               disabled={loading}
-              style={{ flex: 'none', width: '100%' }}
             >
-              <span>{loading ? 'Signing In...' : '🎯 Sign In'}</span>
+              <LogIn size={18} className="btn-icon" />
+              <span>{loading ? 'Signing In...' : 'Sign In'}</span>
             </button>
           </div>
 
@@ -115,8 +125,40 @@ const LoginForm = () => {
             <span>OR</span>
           </div>
 
+          {/* Features Grid */}
+          <div className="features-grid">
+            <div className="feature-card">
+              <div className="feature-icon-wrapper trophy">
+                <Trophy size={24} />
+              </div>
+              <div className="feature-text">Level Up</div>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon-wrapper target">
+                <Target size={24} />
+              </div>
+              <div className="feature-text">Track Goals</div>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon-wrapper zap">
+                <Zap size={24} />
+              </div>
+              <div className="feature-text">Earn Rewards</div>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon-wrapper gift">
+                <Gift size={24} />
+              </div>
+              <div className="feature-text">Daily Quests</div>
+            </div>
+          </div>
+
           <div className="signup-text">
-            New to the circus? <span className="signup-link" onClick={() => navigate('/signup')}>Join to the Show</span>
+            New to the circus? 
+            <span className="signup-link" onClick={() => navigate('/signup')}>
+              <UserPlus size={14} className="signup-icon" />
+              Join the Show
+            </span>
           </div>
         </div>
       </div>

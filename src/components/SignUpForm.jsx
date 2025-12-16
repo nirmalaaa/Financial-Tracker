@@ -1,10 +1,11 @@
+// File: src/components/SignUpForm.jsx
 import React, { useState } from 'react';
 import { Star, Sparkles, Trophy, Target, User, Mail, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './SignUpForm.css';
 
 const SignUpForm = () => {
-  const navigate = useNavigate(); // INI YANG DITAMBAHKAN
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -51,14 +52,33 @@ const SignUpForm = () => {
       setLoading(false);
       setShowSuccess(true);
       setTimeout(() => {
-        // REDIRECT KE DASHBOARD
-        navigate('/dashboard');
+        navigate('/');
       }, 2500);
     }, 1500);
   };
 
   return (
     <div className="circus-container">
+      {/* Success Modal */}
+      {showSuccess && (
+        <div className="success-modal-overlay">
+          <div className="success-modal">
+            <div className="success-confetti">
+              <Sparkles className="confetti-1" size={24} />
+              <Star className="confetti-2" size={20} />
+              <Sparkles className="confetti-3" size={22} />
+              <Star className="confetti-4" size={18} />
+            </div>
+            <div className="success-icon">🎪</div>
+            <h2 className="success-title">WELCOME TO THE CIRCUS!</h2>
+            <p className="success-message">
+              Your account has been created successfully.<br />
+              Get ready for an amazing adventure!
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Decorative Stars */}
       <Star className="star-decoration star-1" size={20} />
       <Star className="star-decoration star-2" size={16} />
@@ -186,30 +206,10 @@ const SignUpForm = () => {
           </div>
 
           <div className="signup-text">
-            Already have an account? <span className="signup-link" onClick={() => navigate('/')}>Sign In</span>
+            Already have an account? <a href="/" className="signup-link">Sign In</a>
           </div>
         </div>
       </div>
-
-      {/* Success Modal */}
-      {showSuccess && (
-        <div className="success-modal-overlay">
-          <div className="success-modal">
-            <div className="success-confetti">
-              <Sparkles className="confetti-1" size={24} />
-              <Star className="confetti-2" size={20} />
-              <Sparkles className="confetti-3" size={22} />
-              <Star className="confetti-4" size={18} />
-            </div>
-            <div className="success-icon">🎪</div>
-            <h2 className="success-title">WELCOME TO THE CIRCUS!</h2>
-            <p className="success-message">
-              Your account has been created successfully.<br />
-              Get ready for an amazing adventure!
-            </p>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
