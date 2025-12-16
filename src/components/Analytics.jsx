@@ -1,16 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, Activity, AlertCircle, CheckCircle, Zap, Target, PieChart, BarChart3, ArrowLeft, Lightbulb, Trophy, Star, Award, DollarSign, Wallet, TrendingDown as Down, ShieldAlert, Flame, Gift, Sparkles, Heart, BadgeCheck } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { TrendingUp, TrendingDown, Activity, AlertCircle, CheckCircle, Zap, Target, PieChart, BarChart3, ArrowLeft, Lightbulb, Trophy, Star, Award, DollarSign, Wallet, ShieldAlert, Flame, Gift, Sparkles, Heart, BadgeCheck } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import './Analytics.css';
 
-const Analytics = ({ 
-  transactions = [], 
-  budgets = {}, 
-  level = 1, 
-  xp = 0,
-  onNavigateDashboard = null // Optional callback from parent
-}) => {
+const Analytics = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Get data from navigation state
+  const data = location.state || {
+    transactions: [],
+    budgets: {},
+    level: 1,
+    xp: 0,
+    coins: 100,
+    streak: 3,
+    hearts: 5
+  };
+
+  const [transactions] = useState(data.transactions || []);
+  const [budgets] = useState(data.budgets || {});
+  const [level] = useState(data.level || 1);
+  const [xp] = useState(data.xp || 0);
+  const [coins] = useState(data.coins || 100);
+  const [streak] = useState(data.streak || 3);
+  const [hearts] = useState(data.hearts || 5);
+
   const [healthScore, setHealthScore] = useState(0);
   const [scoreFactors, setScoreFactors] = useState({
     budgetAdherence: 0,
@@ -24,6 +39,25 @@ const Analytics = ({
   const [monthlyData, setMonthlyData] = useState([]);
   const [showBudgetModal, setShowBudgetModal] = useState(false);
   const [showGoalsModal, setShowGoalsModal] = useState(false);
+
+  const xpForNextLevel = level * 100;
+  const xpProgress = (xp / xpForNextLevel) * 100;
+
+  const getAvatar = () => {
+    if (level >= 20) return '👑';
+    if (level >= 15) return '🦸';
+    if (level >= 10) return '🧙';
+    if (level >= 5) return '🎯';
+    return '🎪';
+  };
+
+  const getAvatarTitle = () => {
+    if (level >= 20) return 'Money Master';
+    if (level >= 15) return 'Finance Hero';
+    if (level >= 10) return 'Budget Wizard';
+    if (level >= 5) return 'Savings Expert';
+    return 'Money Starter';
+  };
 
   // Calculate Financial Health Score
   useEffect(() => {
@@ -50,8 +84,8 @@ const Analytics = ({
 
     // Factor 1: Budget Adherence (30 points)
     let budgetScore = 0;
-    const totalBudget = Object.values(budgets).reduce((sum, b) => sum + b.limit, 0);
-    const totalSpent = Object.values(budgets).reduce((sum, b) => sum + b.spent, 0);
+    const totalBudget = Object.values(budgets).reduce((sum, b) => sum + (b.limit || 0), 0);
+    const totalSpent = Object.values(budgets).reduce((sum, b) => sum + (b.spent || 0), 0);
     if (totalBudget > 0) {
       const adherence = 1 - (totalSpent / totalBudget);
       budgetScore = Math.max(0, Math.min(30, adherence * 30 + 15));
@@ -153,7 +187,7 @@ const Analytics = ({
     if (healthScore < 50) {
       newInsights.push({
         type: 'warning',
-        icon: <ShieldAlert size={40} />,
+        icon: '⚠️',
         title: 'Low Health Score',
         message: 'Your financial health needs attention. Focus on staying within budget and increasing savings.',
         action: 'Review Budget'
@@ -163,7 +197,7 @@ const Analytics = ({
     if (scoreFactors.budgetAdherence < 15) {
       newInsights.push({
         type: 'danger',
-        icon: <AlertCircle size={40} />,
+        icon: '🚨',
         title: 'Budget Overspending',
         message: 'You\'re exceeding your budget limits. Consider reducing spending in high-expense categories.',
         action: 'Adjust Budget'
@@ -173,7 +207,7 @@ const Analytics = ({
     if (scoreFactors.savingsRate < 15) {
       newInsights.push({
         type: 'warning',
-        icon: <Wallet size={40} />,
+        icon: '💰',
         title: 'Low Savings Rate',
         message: 'Try to save at least 20% of your income. Look for areas to cut unnecessary expenses.',
         action: 'Set Savings Goal'
@@ -183,7 +217,7 @@ const Analytics = ({
     if (spendingTrend === 'increasing') {
       newInsights.push({
         type: 'warning',
-        icon: <TrendingUp size={40} />,
+        icon: '📈',
         title: 'Spending Increasing',
         message: 'Your spending has increased by more than 10% this month. Monitor your expenses closely.',
         action: 'Track Expenses'
@@ -196,7 +230,7 @@ const Analytics = ({
       if (percentage > 40) {
         newInsights.push({
           type: 'info',
-          icon: <PieChart size={40} />,
+          icon: '📊',
           title: `High ${topCategory.name} Spending`,
           message: `${topCategory.name} accounts for ${percentage.toFixed(0)}% of your spending. Consider if this is necessary.`,
           action: 'Review Category'
@@ -207,7 +241,7 @@ const Analytics = ({
     if (healthScore >= 80) {
       newInsights.push({
         type: 'success',
-        icon: <Sparkles size={40} />,
+        icon: '🌟',
         title: 'Excellent Financial Health!',
         message: 'Keep up the great work! You\'re managing your money very well.',
         action: 'Keep Going'
@@ -238,12 +272,12 @@ const Analytics = ({
   };
 
   const getScoreGrade = () => {
-    if (healthScore >= 90) return { grade: 'A+', color: '#4caf50', icon: <Award size={40} /> };
-    if (healthScore >= 80) return { grade: 'A', color: '#66bb6a', icon: <Trophy size={40} /> };
-    if (healthScore >= 70) return { grade: 'B', color: '#fdd835', icon: <Star size={40} /> };
-    if (healthScore >= 60) return { grade: 'C', color: '#ff9800', icon: <Target size={40} /> };
-    if (healthScore >= 50) return { grade: 'D', color: '#ff6b6b', icon: <AlertCircle size={40} /> };
-    return { grade: 'F', color: '#f44336', icon: <ShieldAlert size={40} /> };
+    if (healthScore >= 90) return { grade: 'A+', color: '#4caf50', emoji: '🌟' };
+    if (healthScore >= 80) return { grade: 'A', color: '#66bb6a', emoji: '✨' };
+    if (healthScore >= 70) return { grade: 'B', color: '#fdd835', emoji: '👍' };
+    if (healthScore >= 60) return { grade: 'C', color: '#ff9800', emoji: '⚠️' };
+    if (healthScore >= 50) return { grade: 'D', color: '#ff6b6b', emoji: '😰' };
+    return { grade: 'F', color: '#f44336', emoji: '🚨' };
   };
 
   const getScoreDescription = () => {
@@ -254,16 +288,21 @@ const Analytics = ({
   };
 
   const handleNavigateToDashboard = () => {
-    // Priority: callback prop > react-router navigate > window location
-    if (onNavigateDashboard) {
-      onNavigateDashboard();
-    } else {
-      try {
-        navigate('/dashboard');
-      } catch (e) {
-        window.location.href = '/dashboard';
-      }
-    }
+    navigate('/dashboard', { 
+      state: { 
+        transactions, 
+        budgets, 
+        level, 
+        xp,
+        coins,
+        streak,
+        hearts
+      } 
+    });
+  };
+
+  const handleLogout = () => {
+    navigate('/');
   };
 
   const handleInsightAction = (action) => {
@@ -279,7 +318,6 @@ const Analytics = ({
         handleNavigateToDashboard();
         break;
       case 'Review Category':
-        // Scroll to top category section
         document.querySelector('.top-category-section')?.scrollIntoView({ behavior: 'smooth' });
         break;
       default:
@@ -291,302 +329,300 @@ const Analytics = ({
 
   return (
     <div className="analytics-container">
-      {/* Header */}
-      <div className="analytics-header">
-        <button className="back-btn" onClick={handleNavigateToDashboard}>
-          <ArrowLeft size={24} />
-        </button>
-        <h1 className="analytics-title">
-          <Activity size={28} />
-          Financial Analytics
-        </h1>
+      {/* Top Bar - Same as Dashboard */}
+      <div className="top-bar">
+        <div className="top-bar-left">
+          <div className="streak-badge">
+              <Flame size={18} className="flame-icon" />
+            <span className="streak-number">{streak}</span>
+          </div>
+          <div className="hearts-container">
+            {[...Array(5)].map((_, i) => (
+              <span key={i} className={`heart ${i < hearts ? 'active' : ''}`}>
+                ❤️
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className="top-bar-right">
+          <div className="coins-display">
+            <span className="coin-icon">💰</span>
+            <span className="coin-amount">{coins}</span>
+          </div>
+          <button className="logout-btn-top" onClick={handleLogout}>
+            Exit
+          </button>
+        </div>
       </div>
 
-      {/* Financial Health Score */}
-      <div className="health-score-section">
-        <div className="health-score-card">
-          <div className="score-header">
-            <h2>Financial Health Score</h2>
-            <div className="score-badge" style={{ color: scoreGrade.color }}>
-              {scoreGrade.icon}
-            </div>
-          </div>
+      {/* Main Content */}
+      <div className="analytics-content">
+        {/* Header with Back Button and Avatar */}
+        <div className="analytics-header-full">
+          <button className="back-btn" onClick={handleNavigateToDashboard}>
+            <ArrowLeft size={24} />
+          </button>
           
-          <div className="score-display">
-            <div className="score-circle" style={{ '--score-color': scoreGrade.color }}>
-              <svg viewBox="0 0 200 200">
-                <circle cx="100" cy="100" r="90" className="score-bg" />
-                <circle 
-                  cx="100" 
-                  cy="100" 
-                  r="90" 
-                  className="score-progress"
-                  style={{ 
-                    strokeDashoffset: 565 - (565 * healthScore) / 100,
-                    stroke: scoreGrade.color 
-                  }}
-                />
-              </svg>
-              <div className="score-content">
-                <div className="score-number">{healthScore}</div>
-                <div className="score-grade">{scoreGrade.grade}</div>
-              </div>
+          <div className="analytics-mascot-section">
+            <div className="analytics-mascot">
+              <div className="analytics-mascot-character">{getAvatar()}</div>
+              <div className="analytics-mascot-title">{getAvatarTitle()}</div>
             </div>
-          </div>
-
-          <div className="score-description">
-            {getScoreDescription()}
-          </div>
-
-          {/* Score Factors */}
-          <div className="score-factors">
-            <div className="factor-item">
-              <div className="factor-header">
-                <div className="factor-icon-wrapper budget-icon">
-                  <BarChart3 size={20} />
-                </div>
-                <span className="factor-name">Budget Adherence</span>
+            <div className="analytics-level-display">
+              <div className="analytics-level-badge">
+                <Star className="analytics-level-star" size={18} />
+                <span className="analytics-level-text">Level {level}</span>
               </div>
-              <div className="factor-bar">
-                <div 
-                  className="factor-fill"
-                  style={{ width: `${(scoreFactors.budgetAdherence / 30) * 100}%` }}
-                ></div>
-              </div>
-              <div className="factor-score">{scoreFactors.budgetAdherence}/30</div>
-            </div>
-
-            <div className="factor-item">
-              <div className="factor-header">
-                <div className="factor-icon-wrapper savings-icon">
-                  <DollarSign size={20} />
-                </div>
-                <span className="factor-name">Savings Rate</span>
-              </div>
-              <div className="factor-bar">
-                <div 
-                  className="factor-fill"
-                  style={{ width: `${(scoreFactors.savingsRate / 30) * 100}%` }}
-                ></div>
-              </div>
-              <div className="factor-score">{scoreFactors.savingsRate}/30</div>
-            </div>
-
-            <div className="factor-item">
-              <div className="factor-header">
-                <div className="factor-icon-wrapper consistency-icon">
-                  <Activity size={20} />
-                </div>
-                <span className="factor-name">Spending Consistency</span>
-              </div>
-              <div className="factor-bar">
-                <div 
-                  className="factor-fill"
-                  style={{ width: `${(scoreFactors.spendingConsistency / 20) * 100}%` }}
-                ></div>
-              </div>
-              <div className="factor-score">{scoreFactors.spendingConsistency}/20</div>
-            </div>
-
-            <div className="factor-item">
-              <div className="factor-header">
-                <div className="factor-icon-wrapper level-icon">
-                  <Zap size={20} />
-                </div>
-                <span className="factor-name">Level Progress</span>
-              </div>
-              <div className="factor-bar">
-                <div 
-                  className="factor-fill"
-                  style={{ width: `${(scoreFactors.emergencyFund / 20) * 100}%` }}
-                ></div>
-              </div>
-              <div className="factor-score">{scoreFactors.emergencyFund}/20</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Spending Insights */}
-      <div className="insights-section">
-        <h2 className="section-title">
-          <Lightbulb size={24} />
-          Smart Insights
-        </h2>
-        <div className="insights-grid">
-          {insights.length > 0 ? insights.map((insight, index) => (
-            <div key={index} className={`insight-card ${insight.type}`}>
-              <div className={`insight-icon-wrapper ${insight.type}`}>
-                {insight.icon}
-              </div>
-              <div className="insight-content">
-                <h3 className="insight-title">{insight.title}</h3>
-                <p className="insight-message">{insight.message}</p>
-                <button 
-                  className="insight-action"
-                  onClick={() => handleInsightAction(insight.action)}
-                >
-                  {insight.action}
-                </button>
-              </div>
-            </div>
-          )) : (
-            <div className="insight-card info">
-              <div className="insight-icon-wrapper info">
-                <Lightbulb size={40} />
-              </div>
-              <div className="insight-content">
-                <h3 className="insight-title">Getting Started</h3>
-                <p className="insight-message">Add more transactions to get personalized insights!</p>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Spending Chart */}
-      <div className="chart-section">
-        <h2 className="section-title">
-          <BarChart3 size={24} />
-          Monthly Spending Trend
-        </h2>
-        <div className="chart-card">
-          {monthlyData.length > 0 ? (
-            <div className="simple-chart">
-              {monthlyData.map(([month, amount]) => {
-                const maxAmount = Math.max(...monthlyData.map(m => m[1]));
-                const height = (amount / maxAmount) * 100;
-                return (
-                  <div key={month} className="chart-bar-wrapper">
-                    <div className="chart-bar" style={{ height: `${height}%` }}>
-                      <div className="chart-value">
-                        Rp {(amount / 1000000).toFixed(1)}M
-                      </div>
-                    </div>
-                    <div className="chart-label">{month}</div>
+              <div className="analytics-xp-container">
+                <div className="analytics-xp-bar-bg">
+                  <div className="analytics-xp-bar-fill" style={{ width: `${xpProgress}%` }}>
+                    <div className="analytics-xp-shine"></div>
                   </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="chart-empty">
-              <div className="empty-icon-wrapper">
-                <BarChart3 size={60} />
+                </div>
+                <div className="analytics-xp-text">{xp} / {xpForNextLevel} XP</div>
               </div>
-              <p>No spending data yet. Start tracking to see your trends!</p>
             </div>
-          )}
-        </div>
-      </div>
+          </div>
 
-      {/* Top Category */}
-      {topCategory && (
-        <div className="top-category-section">
+          <h1 className="analytics-title">
+            <Activity size={28} />
+            Financial Analytics
+          </h1>
+        </div>
+
+        {/* Financial Health Score */}
+        <div className="health-score-section">
+          <div className="health-score-card">
+            <div className="score-header">
+              <h2>Financial Health Score</h2>
+              <div className="score-badge">
+                <span className="score-emoji">{scoreGrade.emoji}</span>
+              </div>
+            </div>
+            
+            <div className="score-display">
+              <div className="score-circle" style={{ '--score-color': scoreGrade.color }}>
+                <svg viewBox="0 0 200 200">
+                  <circle cx="100" cy="100" r="90" className="score-bg" />
+                  <circle 
+                    cx="100" 
+                    cy="100" 
+                    r="90" 
+                    className="score-progress"
+                    style={{ 
+                      strokeDashoffset: 565 - (565 * healthScore) / 100,
+                      stroke: scoreGrade.color 
+                    }}
+                  />
+                </svg>
+                <div className="score-content">
+                  <div className="score-number">{healthScore}</div>
+                  <div className="score-grade">{scoreGrade.grade}</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="score-description">
+              {getScoreDescription()}
+            </div>
+
+            {/* Score Factors */}
+            <div className="score-factors">
+              <div className="factor-item">
+                <div className="factor-header">
+                  <span className="factor-icon">📊</span>
+                  <span className="factor-name">Budget Adherence</span>
+                </div>
+                <div className="factor-bar">
+                  <div 
+                    className="factor-fill"
+                    style={{ width: `${(scoreFactors.budgetAdherence / 30) * 100}%` }}
+                  ></div>
+                </div>
+                <div className="factor-score">{scoreFactors.budgetAdherence}/30</div>
+              </div>
+
+              <div className="factor-item">
+                <div className="factor-header">
+                  <span className="factor-icon">💰</span>
+                  <span className="factor-name">Savings Rate</span>
+                </div>
+                <div className="factor-bar">
+                  <div 
+                    className="factor-fill"
+                    style={{ width: `${(scoreFactors.savingsRate / 30) * 100}%` }}
+                  ></div>
+                </div>
+                <div className="factor-score">{scoreFactors.savingsRate}/30</div>
+              </div>
+
+              <div className="factor-item">
+                <div className="factor-header">
+                  <span className="factor-icon">📈</span>
+                  <span className="factor-name">Spending Consistency</span>
+                </div>
+                <div className="factor-bar">
+                  <div 
+                    className="factor-fill"
+                    style={{ width: `${(scoreFactors.spendingConsistency / 20) * 100}%` }}
+                  ></div>
+                </div>
+                <div className="factor-score">{scoreFactors.spendingConsistency}/20</div>
+              </div>
+
+              <div className="factor-item">
+                <div className="factor-header">
+                  <span className="factor-icon">🎯</span>
+                  <span className="factor-name">Level Progress</span>
+                </div>
+                <div className="factor-bar">
+                  <div 
+                    className="factor-fill"
+                    style={{ width: `${(scoreFactors.emergencyFund / 20) * 100}%` }}
+                  ></div>
+                </div>
+                <div className="factor-score">{scoreFactors.emergencyFund}/20</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Spending Insights */}
+        <div className="insights-section">
           <h2 className="section-title">
-            <PieChart size={24} />
-            Top Spending Category
+            <Lightbulb size={24} />
+            Smart Insights
           </h2>
-          <div className="top-category-card">
-            <div className="category-icon-big-wrapper">
-              <Trophy size={60} />
-            </div>
-            <div className="category-info">
-              <h3 className="category-name">{topCategory.name}</h3>
-              <div className="category-amount">
-                Rp {topCategory.amount.toLocaleString('id-ID')}
+          <div className="insights-grid">
+            {insights.length > 0 ? insights.map((insight, index) => (
+              <div key={index} className={`insight-card ${insight.type}`}>
+                <div className="insight-icon">{insight.icon}</div>
+                <div className="insight-content">
+                  <h3 className="insight-title">{insight.title}</h3>
+                  <p className="insight-message">{insight.message}</p>
+                  <button 
+                    className="insight-action"
+                    onClick={() => handleInsightAction(insight.action)}
+                  >
+                    {insight.action}
+                  </button>
+                </div>
               </div>
-              <p className="category-desc">Your highest expense this month</p>
-            </div>
+            )) : (
+              <div className="insight-card info">
+                <div className="insight-icon">💡</div>
+                <div className="insight-content">
+                  <h3 className="insight-title">Getting Started</h3>
+                  <p className="insight-message">Add more transactions to get personalized insights!</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-      )}
 
-      {/* Tips Section */}
-      <div className="tips-section">
-        <h2 className="section-title">
-          <Star size={24} />
-          Improvement Tips
-        </h2>
-        <div className="tips-grid">
-          <div className="tip-card">
-            <div className="tip-icon-circle">
-              <CheckCircle size={24} />
-            </div>
-            <h3>Track Every Day</h3>
-            <p>Input transactions daily to maintain consistency and awareness</p>
+        {/* Spending Chart */}
+        <div className="chart-section">
+          <h2 className="section-title">
+            <BarChart3 size={24} />
+            Monthly Spending Trend
+          </h2>
+          <div className="chart-card">
+            {monthlyData.length > 0 ? (
+              <div className="simple-chart">
+                {monthlyData.map(([month, amount]) => {
+                  const maxAmount = Math.max(...monthlyData.map(m => m[1]));
+                  const height = (amount / maxAmount) * 100;
+                  return (
+                    <div key={month} className="chart-bar-wrapper">
+                      <div className="chart-bar" style={{ height: `${height}%` }}>
+                        <div className="chart-value">
+                          Rp {(amount / 1000000).toFixed(1)}M
+                        </div>
+                      </div>
+                      <div className="chart-label">{month}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="chart-empty">
+                <div className="empty-icon">📊</div>
+                <p>No spending data yet. Start tracking to see your trends!</p>
+              </div>
+            )}
           </div>
-          <div className="tip-card">
-            <div className="tip-icon-circle">
-              <Target size={24} />
+        </div>
+
+        {/* Top Category */}
+        {topCategory && (
+          <div className="top-category-section">
+            <h2 className="section-title">
+              <PieChart size={24} />
+              Top Spending Category
+            </h2>
+            <div className="top-category-card">
+              <div className="category-icon-big">🏆</div>
+              <div className="category-info">
+                <h3 className="category-name">{topCategory.name}</h3>
+                <div className="category-amount">
+                  Rp {topCategory.amount.toLocaleString('id-ID')}
+                </div>
+                <p className="category-desc">Your highest expense this month</p>
+              </div>
             </div>
-            <h3>Follow 50/30/20 Rule</h3>
-            <p>50% needs, 30% wants, 20% savings for balanced finances</p>
           </div>
-          <div className="tip-card">
-            <div className="tip-icon-circle">
-              <Activity size={24} />
+        )}
+
+        {/* Tips Section */}
+        <div className="tips-section">
+          <h2 className="section-title">
+            <Star size={24} />
+            Improvement Tips
+          </h2>
+          <div className="tips-grid">
+            <div className="tip-card">
+              <div className="tip-number">1</div>
+              <h3>Track Every Day</h3>
+              <p>Input transactions daily to maintain consistency and awareness</p>
             </div>
-            <h3>Review Weekly</h3>
-            <p>Check your spending patterns every week to stay on track</p>
-          </div>
-          <div className="tip-card">
-            <div className="tip-icon-circle">
-              <Flame size={24} />
+            <div className="tip-card">
+              <div className="tip-number">2</div>
+              <h3>Follow 50/30/20 Rule</h3>
+              <p>50% needs, 30% wants, 20% savings for balanced finances</p>
             </div>
-            <h3>Set Realistic Goals</h3>
-            <p>Start with achievable savings goals and gradually increase</p>
+            <div className="tip-card">
+              <div className="tip-number">3</div>
+              <h3>Review Weekly</h3>
+              <p>Check your spending patterns every week to stay on track</p>
+            </div>
+            <div className="tip-card">
+              <div className="tip-number">4</div>
+              <h3>Set Realistic Goals</h3>
+              <p>Start with achievable savings goals and gradually increase</p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Budget Modal */}
+      {/* Modals */}
       {showBudgetModal && (
         <div className="game-modal-overlay" onClick={(e) => e.target.className === 'game-modal-overlay' && setShowBudgetModal(false)}>
-          <div className="game-modal analytics-modal">
+          <div className="game-modal">
             <button className="game-modal-close" onClick={() => setShowBudgetModal(false)}>
               <span style={{ fontSize: '24px' }}>×</span>
             </button>
             <div className="game-modal-header">
-              <div className="modal-mascot-icon">
-                <Wallet size={50} />
-              </div>
+              <div className="modal-mascot">💰</div>
               <h3 className="game-modal-title">Budget Overview</h3>
             </div>
 
             <div className="budget-modal-content">
               <p className="modal-description">
-                Review your budget settings and adjust limits to better match your spending patterns.
+                Review your budget settings in the Dashboard to adjust limits.
               </p>
               
-              <div className="budget-list">
-                {Object.entries(budgets).map(([category, data]) => {
-                  const percentage = (data.spent / data.limit) * 100;
-                  return (
-                    <div key={category} className="budget-item-modal">
-                      <div className="budget-item-header">
-                        <span className="budget-category-name">{category}</span>
-                        <span className="budget-percentage">{percentage.toFixed(0)}%</span>
-                      </div>
-                      <div className="budget-amounts">
-                        <span className="spent">Rp {data.spent.toLocaleString('id-ID')}</span>
-                        <span className="limit">/ Rp {data.limit.toLocaleString('id-ID')}</span>
-                      </div>
-                      <div className="budget-bar-modal">
-                        <div 
-                          className="budget-bar-fill-modal" 
-                          style={{ 
-                            width: `${Math.min(percentage, 100)}%`,
-                            background: percentage >= 90 ? '#ff6b6b' : percentage >= 80 ? '#ffd93d' : '#51cf66'
-                          }}
-                        ></div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
               <button 
-                className="game-submit-btn modal-action-btn" 
+                className="game-submit-btn" 
                 onClick={() => {
                   setShowBudgetModal(false);
                   handleNavigateToDashboard();
@@ -599,48 +635,24 @@ const Analytics = ({
         </div>
       )}
 
-      {/* Goals Modal */}
       {showGoalsModal && (
         <div className="game-modal-overlay" onClick={(e) => e.target.className === 'game-modal-overlay' && setShowGoalsModal(false)}>
-          <div className="game-modal analytics-modal">
+          <div className="game-modal">
             <button className="game-modal-close" onClick={() => setShowGoalsModal(false)}>
               <span style={{ fontSize: '24px' }}>×</span>
             </button>
             <div className="game-modal-header">
-              <div className="modal-mascot-icon goals">
-                <Target size={50} />
-              </div>
+              <div className="modal-mascot">🎯</div>
               <h3 className="game-modal-title">Savings Goals</h3>
             </div>
 
             <div className="goals-modal-content">
               <p className="modal-description">
-                Setting savings goals helps you stay motivated and track your financial progress!
+                Create and manage your savings goals in the Dashboard!
               </p>
               
-              <div className="savings-tips">
-                <div className="tip-item-modal">
-                  <div className="tip-icon-modal-wrapper idea">
-                    <Lightbulb size={24} />
-                  </div>
-                  <span className="tip-text">Start with small, achievable goals</span>
-                </div>
-                <div className="tip-item-modal">
-                  <div className="tip-icon-modal-wrapper growth">
-                    <TrendingUp size={24} />
-                  </div>
-                  <span className="tip-text">Aim to save 20% of your income</span>
-                </div>
-                <div className="tip-item-modal">
-                  <div className="tip-icon-modal-wrapper target">
-                    <Target size={24} />
-                  </div>
-                  <span className="tip-text">Set specific targets with deadlines</span>
-                </div>
-              </div>
-
               <button 
-                className="game-submit-btn modal-action-btn" 
+                className="game-submit-btn" 
                 onClick={() => {
                   setShowGoalsModal(false);
                   handleNavigateToDashboard();
