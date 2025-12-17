@@ -1524,51 +1524,80 @@ body {
 /* ============================================
    RESPONSIVE
    ============================================ */
+/* ✅ TOP BAR RESPONSIVE */
 @media (max-width: 768px) {
-  .game-content {
-    padding: 20px 15px;
+  .top-bar {
+    padding: 8px 12px;
+    gap: 8px;
   }
 
-  .mascot-section {
-    flex-direction: column;
-    text-align: center;
+  .top-bar-left {
+    gap: 8px;
   }
 
-  .mascot-character {
-    font-size: 60px;
+  .streak-badge {
+    padding: 4px 10px;
+    gap: 4px;
+    font-size: 12px;
   }
 
-  .level-text {
-    font-size: 24px;
+  .hearts-container {
+    gap: 2px;
   }
 
-  .stats-cards {
-    grid-template-columns: 1fr;
+  .heart {
+    font-size: 14px;
   }
 
-  .quests-grid {
-    grid-template-columns: 1fr;
+  .coins-display {
+    padding: 4px 10px;
+    gap: 4px;
+    font-size: 12px;
   }
 
-  .transaction-game-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
+  .coin-icon {
+    font-size: 14px;
   }
 
-  .transaction-game-right {
-    width: 100%;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
+  .coin-amount {
+    font-size: 13px;
   }
 
-  .game-modal {
-    padding: 30px 20px;
+  .logout-btn-top {
+    padding: 6px 12px;
+    font-size: 12px;
   }
 
-  .btn-text {
-    font-size: 20px;
+  .tutorial-btn {
+    padding: 6px 10px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .top-bar {
+    padding: 6px 10px;
+  }
+
+  .streak-number {
+    font-size: 11px;
+  }
+
+  .coins-display {
+    padding: 4px 8px;
+  }
+
+  .coin-amount {
+    font-size: 12px;
+  }
+
+  .logout-btn-top {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+
+  .tutorial-btn {
+    padding: 5px 8px;
   }
 }
 

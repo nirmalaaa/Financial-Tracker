@@ -18,6 +18,7 @@ const Dashboard = () => {
   const [deleteId, setDeleteId] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [firstLoad, setFirstLoad] = useState(true);
 
   // Tutorial State
   const [showTutorial, setShowTutorial] = useState(false);
@@ -44,8 +45,10 @@ const Dashboard = () => {
   // const [coins, setCoins] = useState(100);
   const [coins, setCoins] = useState(() => {
     const stored = localStorage.getItem('coins');
-    return stored !== null ? Number(stored) : 100; // Default 100 untuk user baru
+    return stored !== null ? Number(stored) : 100;
   });
+
+
 
   const [streak, setStreak] = useState(() => {
     const stored = localStorage.getItem('streak');
@@ -132,54 +135,34 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-  const sync = () => {
-    const stored = localStorage.getItem('coins');
-    if (stored !== null) setCoins(Number(stored));
-  };
-
-  sync();
-  // window.addEventListener('storage', sync);
-  return () => window.removeEventListener('storage', sync);
-}, []);
-
-
-  useEffect(() => {
-    localStorage.setItem('coins', coins.toString());
+    localStorage.setItem('coins', coins);
   }, [coins]);
 
+  useEffect(() => {
+    if (!firstLoad) {
+      const milestones = {
+        10: { coins: 20 },
+        50: { coins: 50, hearts: 1 },
+        100: { coins: 100, hearts: 1 },
+        200: { coins: 200, hearts: 2 },
+      };
 
-useEffect(() => {
-  const milestones = {
-    10: { coins: 20 },
-    50: { coins: 50, hearts: 1 },
-    100: { coins: 100, hearts: 1 },
-    200: { coins: 200, hearts: 2 },
-  };
+      const lastRewarded =
+        Number(localStorage.getItem('lastStreakReward')) || 0;
 
-  const lastRewarded =
-    Number(localStorage.getItem('lastStreakReward')) || 0;
+      if (milestones[streak] && streak > lastRewarded) {
+        const reward = milestones[streak];
 
-  if (milestones[streak] && streak > lastRewarded) {
-    const reward = milestones[streak];
+        if (reward.coins) setCoins(prev => prev + reward.coins);
+        if (reward.hearts) setHearts(prev => Math.min(prev + reward.hearts, 5));
 
-    if (reward.coins) {
-      setCoins(prev => prev + reward.coins);
+        localStorage.setItem('lastStreakReward', streak);
+        showCelebrationModal(`🔥 ${streak} Day Streak! Reward Claimed!`);
+      }
     }
 
-    if (reward.hearts) {
-      setHearts(prev => Math.min(prev + reward.hearts, 5));
-    }
-
-    localStorage.setItem('lastStreakReward', streak.toString());
-
-    showCelebrationModal(
-      `🔥 ${streak} Day Streak!
-       +${reward.coins || 0} Coins
-       ${reward.hearts ? `+${reward.hearts} ❤️` : ''}`
-    );
-  }
-}, [streak]);
-
+    setFirstLoad(false);
+  }, [streak]);
 
 useEffect(() => {
   const today = new Date().toDateString();

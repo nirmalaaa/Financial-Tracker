@@ -1156,6 +1156,479 @@
   }
 }
 
+
+
+  /* Avatar Title */
+.mascot-title {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: white;
+  margin-top: 10px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  animation: titleShine 2s ease-in-out infinite;
+}
+
+@keyframes titleShine {
+  0%, 100% { text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); }
+  50% { text-shadow: 0 0 15px rgba(255, 255, 255, 0.8), 2px 2px 4px rgba(0, 0, 0, 0.3); }
+}
+
+  /* Analytics Header Mobile */
+  .analytics-header-full {
+    padding: 80px;
+  }
+
+  .back-btn {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 16px;
+  }
+
+  .analytics-mascot-section {
+    flex-direction: column;
+    text-align: center;
+    gap: 16px;
+    padding: 20px 16px;
+  }
+
+  .analytics-mascot-character {
+    font-size: 48px;
+  }
+
+  .analytics-mascot-title {
+    font-size: 16px;
+  }
+
+  .analytics-level-display {
+    width: 100%;
+  }
+
+  .analytics-level-badge {
+    justify-content: center;
+  }
+
+  .analytics-title {
+    font-size: 24px;
+    justify-content: center;
+    text-align: center;
+  }
+
+  /* Analytics Content Mobile */
+  .analytics-content {
+    padding: 16px;
+  }
+
+  /* Health Score Mobile */
+  .health-score-card {
+    padding: 20px 16px;
+  }
+
+  .score-header h2 {
+    font-size: 20px;
+  }
+
+  .score-display {
+    margin: 20px 0;
+  }
+
+  .score-circle {
+    width: 180px;
+    height: 180px;
+  }
+
+  .score-number {
+    font-size: 36px;
+  }
+
+  .score-grade {
+    font-size: 20px;
+  }
+
+  .score-description {
+    font-size: 14px;
+  }
+
+  .score-factors {
+    gap: 16px;
+  }
+
+  .factor-header {
+    font-size: 14px;
+  }
+
+  .factor-score {
+    font-size: 13px;
+  }
+
+  /* Section Titles Mobile */
+  .section-title {
+    font-size: 20px;
+    gap: 8px;
+  }
+
+  .section-title svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Insights Grid Mobile */
+  .insights-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .insight-card {
+    padding: 16px;
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .insight-icon {
+    font-size: 36px;
+    margin-bottom: 12px;
+  }
+
+  .insight-title {
+    font-size: 16px;
+  }
+
+  .insight-message {
+    font-size: 13px;
+  }
+
+  .insight-action {
+    width: 100%;
+    margin-top: 12px;
+  }
+
+  /* Chart Section Mobile */
+  .chart-section {
+    margin-bottom: 20px;
+  }
+
+  .chart-mode-btn {
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+
+  .chart-card {
+    padding: 16px;
+  }
+
+  /* Line Chart Mobile - Make scrollable */
+  .chart-card svg {
+    min-width: 500px;
+  }
+
+  .chart-card:has(svg) {
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  /* Pie Chart Mobile */
+  .chart-card > div {
+    flex-direction: column !important;
+    gap: 20px !important;
+  }
+
+  .chart-card svg {
+    width: 250px !important;
+    height: 250px !important;
+    margin: 0 auto;
+  }
+
+  .chart-card > div > div:last-child {
+    width: 100%;
+  }
+
+  /* Top Category Mobile */
+  .top-category-card {
+    flex-direction: column;
+    text-align: center;
+    padding: 20px 16px;
+  }
+
+  .category-icon-big {
+    font-size: 48px;
+    margin-bottom: 16px;
+  }
+
+  .category-name {
+    font-size: 20px;
+  }
+
+  .category-amount {
+    font-size: 24px;
+  }
+
+  .category-desc {
+    font-size: 13px;
+  }
+
+  /* Tips Grid Mobile */
+  .tips-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .tip-card {
+    padding: 20px;
+  }
+
+  .tip-number {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+
+  .tip-card h3 {
+    font-size: 16px;
+  }
+
+  .tip-card p {
+    font-size: 13px;
+  }
+
+  /* Modal Mobile */
+  .game-modal {
+    max-width: 90%;
+    padding: 24px 20px;
+    margin: 0 16px;
+  }
+
+  .game-modal-header {
+    margin-bottom: 20px;
+  }
+
+  .modal-mascot {
+    font-size: 48px;
+  }
+
+  .game-modal-title {
+    font-size: 20px;
+  }
+
+  .modal-description {
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+
+  .game-modal-close {
+    width: 32px;
+    height: 32px;
+    top: 12px;
+    right: 12px;
+  }
+
+  /* Logout Modal Stats Mobile */
+  .logout-modal-content > div:first-of-type {
+    padding: 12px !important;
+  }
+
+  .logout-modal-content > div:first-of-type > div {
+    font-size: 12px !important;
+  }
+
+  .logout-modal-content > div:first-of-type > div > div:first-child {
+    font-size: 20px !important;
+  }
+
+  /* Buttons Mobile */
+  .logout-modal-content button,
+  .game-submit-btn {
+    padding: 12px !important;
+    font-size: 14px !important;
+  }
+
+
+/* Extra Small Mobile (< 480px) */
+@media (max-width: 480px) {
+  .analytics-title {
+    font-size: 20px;
+  }
+
+  .score-circle {
+    width: 160px;
+    height: 160px;
+  }
+
+  .score-number {
+    font-size: 32px;
+  }
+
+  .score-grade {
+    font-size: 18px;
+  }
+
+  .chart-mode-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  .category-amount {
+    font-size: 20px;
+  }
+
+  .tip-number {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+}
+
+/* Landscape Mobile Fix */
+@media (max-width: 768px) and (orientation: landscape) {
+  .analytics-header-full {
+    padding: 12px 16px;
+  }
+
+  .analytics-mascot-section {
+    flex-direction: row;
+    padding: 16px;
+  }
+
+  .analytics-mascot-character {
+    font-size: 40px;
+  }
+
+  .score-circle {
+    width: 150px;
+    height: 150px;
+  }
+}
+
+/* Tablet Styles (769px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .analytics-content {
+    padding: 24px 20px;
+  }
+
+  .insights-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .tips-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .chart-card svg {
+    max-width: 100%;
+  }
+}
+
+/* Fix for scrollable charts on mobile */
+@media (max-width: 768px) {
+  .chart-card {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .chart-card::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .chart-card::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+  }
+
+  .chart-card::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+  }
+}
+
+/* Ensure text readability on mobile */
+@media (max-width: 768px) {
+  .factor-name,
+  .insight-message,
+  .category-desc,
+  .tip-card p {
+    line-height: 1.6;
+  }
+}
+
+/* ✅ TOP BAR RESPONSIVE */
+@media (max-width: 768px) {
+  .top-bar {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .top-bar-left {
+    gap: 8px;
+  }
+
+  .streak-badge {
+    padding: 4px 10px;
+    gap: 4px;
+    font-size: 12px;
+  }
+
+  .hearts-container {
+    gap: 2px;
+  }
+
+  .heart {
+    font-size: 14px;
+  }
+
+  .coins-display {
+    padding: 4px 10px;
+    gap: 4px;
+    font-size: 12px;
+  }
+
+  .coin-icon {
+    font-size: 14px;
+  }
+
+  .coin-amount {
+    font-size: 13px;
+  }
+
+  .logout-btn-top {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .tutorial-btn {
+    padding: 6px 10px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .top-bar {
+    padding: 6px 10px;
+  }
+
+  .streak-number {
+    font-size: 11px;
+  }
+
+  .coins-display {
+    padding: 4px 8px;
+  }
+
+  .coin-amount {
+    font-size: 12px;
+  }
+
+  .logout-btn-top {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+
+  .tutorial-btn {
+    padding: 5px 8px;
+  }
+}
+
+
+
 /* ============================================
    ANALYTICS TOP BAR & NAVIGATION
    Add this CSS to your Analytics.css file

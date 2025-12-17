@@ -3,39 +3,34 @@ import { TrendingUp, TrendingDown, Activity, AlertCircle, CheckCircle, Zap, Targ
 import { useNavigate, useLocation } from 'react-router-dom';
 import './Analytics.css';
 
-  const Analytics = () => {
+const Analytics = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Get data from navigation state
-  const storedTransactions =
-    JSON.parse(localStorage.getItem('transactions')) || [];
-
-  const storedBudgets =
-    JSON.parse(localStorage.getItem('budgets')) || {};
+  const storedTransactions = JSON.parse(localStorage.getItem('transactions')) || [];
+  const storedBudgets = JSON.parse(localStorage.getItem('budgets')) || {};
 
   const data = location.state || {
     transactions: storedTransactions,
     budgets: storedBudgets,
     level: 1,
     xp: 0,
-    // coins: 100,
     streak: 0,
     hearts: 5
   };
 
-    
   const [transactions] = useState(data.transactions || []);
   const [budgets] = useState(data.budgets || {});
   const [level] = useState(data.level || 1);
   const [xp] = useState(data.xp || 0);
   const [coins, setCoins] = useState(() => {
-  const stored = localStorage.getItem('coins');
+    const stored = localStorage.getItem('coins');
     return stored !== null ? Number(stored) : 0;
   });
   const [streak, setStreak] = useState(0);
   const [hearts, setHearts] = useState(data.hearts || 5);
-  const [chartMode, setChartMode] = useState('monthly'); // 'daily' | 'monthly'
+  const [chartMode, setChartMode] = useState('daily');
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const [healthScore, setHealthScore] = useState(0);
   const [scoreFactors, setScoreFactors] = useState({
@@ -47,53 +42,11 @@ import './Analytics.css';
   const [topCategory, setTopCategory] = useState(null);
   const [spendingTrend, setSpendingTrend] = useState('stable');
   const [insights, setInsights] = useState([]);
-  const [monthlyData, setMonthlyData] = useState([]);
+  const [dailyData, setDailyData] = useState([]);
+  const [categoryData, setCategoryData] = useState([]);
   const [showBudgetModal, setShowBudgetModal] = useState(false);
   const [showGoalsModal, setShowGoalsModal] = useState(false);
-  const [lastLoginDate, setLastLoginDate] = useState(
-  localStorage.getItem('lastLoginDate')
-  );
-
-    const getDailyDataThisMonth = () => {
-    if (!Array.isArray(transactions)) return [];
-
-    const now = new Date();
-    const month = now.getMonth();
-    const year = now.getFullYear();
-
-    const daily = {};
-
-    transactions.forEach(t => {
-      if (!t || t.type !== 'expense' || !t.date) return;
-
-      const d = new Date(t.date);
-      if (isNaN(d)) return;
-
-      if (d.getMonth() !== month || d.getFullYear() !== year) return;
-
-      const day = d.getDate(); // 1 - 31
-      daily[day] = (daily[day] || 0) + Number(t.amount || 0);
-    });
-
-    return Object.entries(daily)
-      .map(([day, amount]) => [Number(day), amount])
-      .sort((a, b) => a[0] - b[0]);
-  };
-
-  
-  const confirmLogout = () => {
-    localStorage.clear();
-    sessionStorage.clear();
-    window.location.replace('/');
-  };
-
-
-  const chartData =
-  chartMode === 'monthly'
-    ? monthlyData
-    : Array.isArray(transactions)
-      ? getDailyDataThisMonth()
-      : [];
+  const [lastLoginDate, setLastLoginDate] = useState(localStorage.getItem('lastLoginDate'));
 
   const xpForNextLevel = level * 100;
   const xpProgress = (xp / xpForNextLevel) * 100;
@@ -114,89 +67,96 @@ import './Analytics.css';
     return 'Money Starter';
   };
 
+  const getDailyDataThisMonth = () => {
+    if (!Array.isArray(transactions)) return [];
+
+    const now = new Date();
+    const month = now.getMonth();
+    const year = now.getFullYear();
+
+    const daily = {};
+
+    transactions.forEach(t => {
+      if (!t || t.type !== 'expense' || !t.date) return;
+
+      const d = new Date(t.date);
+      if (isNaN(d)) return;
+
+      if (d.getMonth() !== month || d.getFullYear() !== year) return;
+
+      const day = d.getDate();
+      daily[day] = (daily[day] || 0) + Number(t.amount || 0);
+    });
+
+    return Object.entries(daily)
+      .map(([day, amount]) => ({ day: Number(day), amount }))
+      .sort((a, b) => a.day - b.day);
+  };
+
+  const getCategoryDataThisMonth = () => {
+    if (!Array.isArray(transactions)) return [];
+
+    const now = new Date();
+    const month = now.getMonth();
+    const year = now.getFullYear();
+
+    const categories = {};
+
+    transactions.forEach(t => {
+      if (!t || t.type !== 'expense' || !t.date) return;
+
+      const d = new Date(t.date);
+      if (isNaN(d)) return;
+
+      if (d.getMonth() !== month || d.getFullYear() !== year) return;
+
+      const cat = t.category || 'Other';
+      categories[cat] = (categories[cat] || 0) + Number(t.amount || 0);
+    });
+
+    return Object.entries(categories)
+      .map(([category, amount]) => ({ category, amount }))
+      .sort((a, b) => b.amount - a.amount);
+  };
+
+  const confirmLogout = () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.replace('/');
+  };
+
   useEffect(() => {
     const stored = localStorage.getItem('coins');
     if (stored !== null) {
       setCoins(Number(stored));
     }
   }, []);
-  
-  useEffect(() => {
-    const syncCoins = () => {
-      setCoins(Number(localStorage.getItem('coins')) || 0);
-    };
-
-    window.addEventListener('storage', syncCoins);
-    return () => window.removeEventListener('storage', syncCoins);
-  }, []);
-
-  useEffect(() => {
-  const milestones = {
-    10: { coins: 20 },
-    50: { coins: 50, hearts: 1 },
-    100: { coins: 100, hearts: 1 },
-    200: { coins: 200, hearts: 2 },
-  };
-
-  const lastRewarded =
-    Number(localStorage.getItem('lastStreakReward')) || 0;
-
-  if (milestones[streak] && streak > lastRewarded) {
-    const reward = milestones[streak];
-
-    if (reward.coins) {
-      setCoins(prev => prev + reward.coins);
-    }
-
-    if (reward.hearts) {
-      setHearts(prev => Math.min(prev + reward.hearts, 5));
-    }
-
-    localStorage.setItem('lastStreakReward', streak.toString());
-
-    showCelebrationModal(
-      `🔥 ${streak} Day Streak!
-       +${reward.coins || 0} Coins
-       ${reward.hearts ? `+${reward.hearts} ❤️` : ''}`
-    );
-  }
-}, [streak]);
-
 
   useEffect(() => {
     const today = new Date().toDateString();
-      if (!lastLoginDate) {
-        // login pertama
-        setStreak(1);
-      } else {
-        const last = new Date(lastLoginDate).toDateString();
-  
-        if (today === last) {
-          // login di hari yang sama → streak tetap
-          return;
-        }
-  
-        const diffDays =
-          (new Date(today) - new Date(last)) / 86400000;
-  
-        if (diffDays === 1) {
-          // login berurutan
-          setStreak(prev => prev + 1);
-        } else {
-          // bolong → reset streak
-          setStreak(1);
-        }
+    if (!lastLoginDate) {
+      setStreak(1);
+    } else {
+      const last = new Date(lastLoginDate).toDateString();
+      if (today === last) {
+        return;
       }
-  
-      setLastLoginDate(today);
-      localStorage.setItem('lastLoginDate', today);
-    }, []);
+      const diffDays = (new Date(today) - new Date(last)) / 86400000;
+      if (diffDays === 1) {
+        setStreak(prev => prev + 1);
+      } else {
+        setStreak(1);
+      }
+    }
+    setLastLoginDate(today);
+    localStorage.setItem('lastLoginDate', today);
+  }, []);
 
-
-  // Calculate Financial Health Score
   useEffect(() => {
     calculateHealthScore();
     calculateInsights();
+    setDailyData(getDailyDataThisMonth());
+    setCategoryData(getCategoryDataThisMonth());
   }, [transactions, budgets]);
 
   const calculateHealthScore = () => {
@@ -222,7 +182,6 @@ import './Analytics.css';
       .filter(t => t.type === 'expense')
       .reduce((sum, t) => sum + Number(t.amount || 0), 0);
 
-    // ===== Budget Adherence =====
     let budgetScore = 0;
     const totalBudget = Object.values(budgets || {})
       .reduce((sum, b) => sum + Number(b.limit || 0), 0);
@@ -235,19 +194,16 @@ import './Analytics.css';
       budgetScore = Math.max(0, Math.min(30, adherence * 30 + 15));
     }
 
-    // ===== Savings Rate =====
     let savingsScore = 0;
     if (totalIncome > 0) {
       const savingsRate = (totalIncome - totalExpense) / totalIncome;
       savingsScore = Math.max(0, Math.min(30, savingsRate * 50));
     }
 
-    // ===== Consistency =====
     const dailySpending = calculateDailySpending(thisMonthTx);
     const consistency = calculateConsistency(dailySpending);
     const consistencyScore = consistency * 20;
 
-    // ===== Level =====
     const levelScore = Math.min(20, (level / 20) * 20);
 
     const factors = {
@@ -288,11 +244,6 @@ import './Analytics.css';
     return Math.max(0, 1 - cv);
   };
 
-    const maxAmount = Math.max(
-       ...chartData.map(d => Number(d[1]) || 0),
-         1
-       );
-
   const calculateInsights = () => {
     const thisMonth = new Date().getMonth();
     const thisYear = new Date().getFullYear();
@@ -302,19 +253,16 @@ import './Analytics.css';
       return date.getMonth() === thisMonth && date.getFullYear() === thisYear && t.type === 'expense';
     });
 
-    // Calculate category spending
     const categorySpending = {};
     thisMonthTx.forEach(t => {
       categorySpending[t.category] = (categorySpending[t.category] || 0) + t.amount;
     });
 
-    // Find top category
     const top = Object.entries(categorySpending).sort((a, b) => b[1] - a[1])[0];
     if (top) {
       setTopCategory({ name: top[0], amount: top[1] });
     }
 
-    // Calculate monthly trend
     const lastMonthTx = transactions.filter(t => {
       const date = new Date(t.date);
       return date.getMonth() === thisMonth - 1 && date.getFullYear() === thisYear && t.type === 'expense';
@@ -330,7 +278,6 @@ import './Analytics.css';
       else setSpendingTrend('stable');
     }
 
-    // Generate insights
     const newInsights = [];
 
     if (healthScore < 50) {
@@ -398,26 +345,6 @@ import './Analytics.css';
     }
 
     setInsights(newInsights);
-
-    // Calculate monthly data for chart
-    const monthly = {};
-    transactions.forEach(t => {
-      if (t.type === 'expense') {
-        const date = new Date(t.date);
-        const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
-        monthly[monthYear] = (monthly[monthYear] || 0) + t.amount;
-      }
-    });
-
-    const sortedMonths = Object.entries(monthly)
-      .sort((a, b) => {
-        const [aMonth, aYear] = a[0].split('/');
-        const [bMonth, bYear] = b[0].split('/');
-        return new Date(aYear, aMonth - 1) - new Date(bYear, bMonth - 1);
-      })
-      .slice(-6);
-
-    setMonthlyData(sortedMonths);
   };
 
   const getScoreGrade = () => {
@@ -450,10 +377,6 @@ import './Analytics.css';
     });
   };
 
-  const handleLogout = () => {
-    navigate('/');
-  };
-
   const handleInsightAction = (action) => {
     switch(action) {
       case 'Review Budget':
@@ -476,13 +399,173 @@ import './Analytics.css';
 
   const scoreGrade = getScoreGrade();
 
+  // Line Chart Component
+  const LineChart = ({ data }) => {
+    if (!data || data.length === 0) return (
+      <div style={{ textAlign: 'center', padding: '40px', color: '#ffffffff' }}>
+        <div style={{ fontSize: '48px', marginBottom: '16px' }}>📊</div>
+        <p>No spending data yet.</p>
+      </div>
+    );
+
+    const maxAmount = Math.max(...data.map(d => d.amount), 1);
+    const width = 600;
+    const height = 300;
+    const padding = 40;
+
+    const points = data.map((item, i) => {
+      const x = padding + (i / (data.length - 1)) * (width - padding * 2);
+      const y = height - padding - ((item.amount / maxAmount) * (height - padding * 2));
+      return { x, y, ...item };
+    });
+
+    const pathData = points.map((p, i) => 
+      `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`
+    ).join(' ');
+
+    return (
+      <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: '300px' }}>
+        {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => {
+          const y = height - padding - (ratio * (height - padding * 2));
+          return (
+            <g key={i}>
+              <line x1={padding} y1={y} x2={width - padding} y2={y} stroke="rgba(255, 254, 254, 0.1)" strokeWidth="1" />
+              <text x={padding - 10} y={y + 4} fontSize="10" fill="#ffffffff" textAnchor="end">
+                {(maxAmount * ratio / 1000).toFixed(0)}K
+              </text>
+            </g>
+          );
+        })}
+
+        <path
+          d={`${pathData} L ${points[points.length - 1].x} ${height - padding} L ${padding} ${height - padding} Z`}
+          fill="url(#gradient)"
+          opacity="0.3"
+        />
+
+        <path
+          d={pathData}
+          fill="none"
+          stroke="#667eea"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+
+        {points.map((p, i) => (
+          <g key={i}>
+            <circle cx={p.x} cy={p.y} r="5" fill="#667eea" stroke="#fff" strokeWidth="2" />
+            <text x={p.x} y={height - padding + 20} fontSize="12" fill="#a0aec0" textAnchor="middle">
+              Day {p.day}
+            </text>
+          </g>
+        ))}
+
+        <defs>
+          <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#667eea" stopOpacity="0.8" />
+            <stop offset="100%" stopColor="#764ba2" stopOpacity="0.1" />
+          </linearGradient>
+        </defs>
+      </svg>
+    );
+  };
+
+  // Pie Chart Component
+  const PieChart = ({ data }) => {
+    if (!data || data.length === 0) return (
+      <div style={{ textAlign: 'center', padding: '40px', color: '#718096' }}>
+        <div style={{ fontSize: '48px', marginBottom: '16px' }}>📊</div>
+        <p>No category data yet.</p>
+      </div>
+    );
+
+    const total = data.reduce((sum, d) => sum + d.amount, 0);
+    const colors = ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b', '#fa709a', '#fee140', '#30cfd0'];
+
+    let currentAngle = -90;
+    const radius = 100;
+    const centerX = 150;
+    const centerY = 150;
+
+    const slices = data.map((item, i) => {
+      const percentage = (item.amount / total) * 100;
+      const angle = (percentage / 100) * 360;
+      const startAngle = currentAngle;
+      const endAngle = currentAngle + angle;
+
+      const startRad = (startAngle * Math.PI) / 180;
+      const endRad = (endAngle * Math.PI) / 180;
+
+      const x1 = centerX + radius * Math.cos(startRad);
+      const y1 = centerY + radius * Math.sin(startRad);
+      const x2 = centerX + radius * Math.cos(endRad);
+      const y2 = centerY + radius * Math.sin(endRad);
+
+      const largeArc = angle > 180 ? 1 : 0;
+
+      const path = `M ${centerX} ${centerY} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} Z`;
+
+      currentAngle = endAngle;
+
+      return {
+        path,
+        color: colors[i % colors.length],
+        category: item.category,
+        amount: item.amount,
+        percentage: percentage.toFixed(1)
+      };
+    });
+
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '40px', padding: '20px', flexWrap: 'wrap' }}>
+        <svg viewBox="0 0 300 300" style={{ width: '300px', height: '300px', flexShrink: 0 }}>
+          {slices.map((slice, i) => (
+            <g key={i}>
+              <path d={slice.path} fill={slice.color} stroke="rgba(255,255,255,0.1)" strokeWidth="2" />
+            </g>
+          ))}
+        </svg>
+        <div style={{ flex: 1, minWidth: '250px' }}>
+          {slices.map((slice, i) => (
+            <div key={i} style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              marginBottom: '12px',
+              padding: '8px 12px',
+              background: 'rgba(255, 255, 255, 0.71)',
+              borderRadius: '8px'
+            }}>
+              <div style={{ 
+                width: '16px', 
+                height: '16px', 
+                background: slice.color, 
+                borderRadius: '4px', 
+                marginRight: '12px',
+                flexShrink: 0
+              }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '14px', fontWeight: '600', color: '#fff' }}>
+                  {slice.category}
+                </div>
+                <div style={{ fontSize: '12px', color: '#ffffffff' }}>
+                  Rp {slice.amount.toLocaleString('id-ID')} ({slice.percentage}%)
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="analytics-container">
-      {/* Top Bar - Same as Dashboard */}
+      {/* Top Bar */}
       <div className="top-bar">
         <div className="top-bar-left">
           <div className="streak-badge">
-              <Flame size={18} className="flame-icon" />
+            <Flame size={18} className="flame-icon" />
             <span className="streak-number">{streak}</span>
           </div>
           <div className="hearts-container">
@@ -498,23 +581,14 @@ import './Analytics.css';
             <span className="coin-icon">💰</span>
             <span className="coin-amount">{coins}</span>
           </div>
-          <button 
-            className="logout-btn-top" 
-            onClick={() => {
-              localStorage.removeItem('financequest_tutorial_done');
-              setShowTutorial(true);
-            }}
-            style={{ marginRight: '10px', background: '#667eea', fontSize: '18px' }}
-            title="Restart Tutorial"
-          >
-            📚
-          </button>
+
           <button
             className="logout-btn-top"
             onClick={() => setShowLogoutModal(true)}
           >
             Exit
           </button>
+
         </div>
       </div>
 
@@ -683,159 +757,42 @@ import './Analytics.css';
           </div>
         </div>
 
-        {/* Spending Chart */}
-          <div className="chart-section">
-            <h2 className="section-title">
-              <BarChart3 size={24} />
-              Spending Trend
-            </h2>
-
-            {/* Toggle */}
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
-              <button
-                onClick={() => setChartMode('daily')}
-                style={{
-                  padding: '6px 14px',
-                  borderRadius: '16px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  background: chartMode === 'daily' ? '#667eea' : '#2a2a3d',
-                  color: 'white'
-                }}
-              >
-                Daily
-              </button>
-
-              <button
-                onClick={() => setChartMode('monthly')}
-                style={{
-                  padding: '6px 14px',
-                  borderRadius: '16px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  background: chartMode === 'monthly' ? '#667eea' : '#2a2a3d',
-                  color: 'white'
-                }}
-              >
-                Monthly
-              </button>
-            </div>
-
-            <div className="chart-card">
-              {chartData.length > 0 ? (
-                <div
-                  className="simple-chart"
-                  style={{
-                    height: '260px',
-                    display: 'flex',
-                    alignItems: 'flex-end',
-                    gap: '12px'
-                  }}
-                >
-                  {chartData.map((item) => {
-                    const label = item?.[0];
-                    const amount = Number(item?.[1] || 0);
-                    const height = Math.max(
-                      12, // ⬅️ minimal 12% supaya kelihatan
-                      (amount / maxAmount) * 100
-                    );
-                    const isHighest = Number(amount) === maxAmount;
-
-                    return (
-                      <div
-                        key={`${chartMode}-${label}`}
-                        className="chart-bar-wrapper"
-                        style={{ textAlign: 'center', flex: 1 }}
-                      >
-                        <div
-                          className="chart-bar"
-                          style={{
-                            height: `${height}%`,
-                            background: isHighest
-                              ? 'linear-gradient(180deg, #ffb347, #ffcc33)'
-                              : 'linear-gradient(180deg, #667eea, #764ba2)',
-                            borderRadius: '6px',
-                            position: 'relative'
-                          }}
-                        >
-                          <div
-                            className="chart-value"
-                            style={{
-                              position: 'absolute',
-                              top: '-20px',
-                              fontSize: '12px',
-                              width: '100%',
-                              color: '#fff'
-                            }}
-                          >
-                            Rp {amount.toLocaleString('id-ID')}
-                          </div>
-                        </div>
-
-                        <div
-                          className="chart-label"
-                          style={{ marginTop: '6px', fontSize: '12px' }}
-                        >
-                          {chartMode === 'daily' ? `Day ${label}` : label}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="chart-empty">
-                  <div className="empty-icon">📊</div>
-                  <p>No spending data yet.</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-        {/* Spending Chart
+        {/* Spending Charts */}
         <div className="chart-section">
           <h2 className="section-title">
             <BarChart3 size={24} />
-            Monthly Spending Trend
+            Spending Trends
           </h2>
-          <div className="chart-card">
-            {monthlyData.length > 0 ? (
-              <div className="simple-chart">
-                {monthlyData.map(([month, amount]) => {
-                  const maxAmount = Math.max(
-                    ...monthlyData.map(m => Number(m[1]) || 0),
-                    1 // ⬅️ anti divide by zero
-                  );
+          
+          <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+            <button
+              onClick={() => setChartMode('daily')}
+              className={`chart-mode-btn ${chartMode === 'daily' ? 'active' : ''}`}
+            >
+              Daily (Line)
+            </button>
+            <button
+              onClick={() => setChartMode('category')}
+              className={`chart-mode-btn ${chartMode === 'category' ? 'active' : ''}`}
+            >
+              Categories (Pie)
+            </button>
+          </div>
 
-                  const height = Math.max(
-                    5, // ⬅️ minimal kelihatan
-                    (Number(amount) / maxAmount) * 100
-                  );
-                  return (
-                    <div className="chart-bar-wrapper">
-                      <div className="chart-bar" style={{ height: `${height}%` }}>
-                        <div className="chart-value">
-                          Rp {(amount / 1_000_000).toFixed(1)}M
-                        </div>
-                      </div>
-                      <div className="chart-label">{month}</div>
-                    </div>
-                  );
-                })}
-              </div>
+          <div className="chart-card">
+            {chartMode === 'daily' ? (
+              <LineChart data={dailyData} />
             ) : (
-              <div className="chart-empty">
-                <div className="empty-icon">📊</div>
-                <p>No spending data yet. Start tracking to see your trends!</p>
-              </div>
+              <PieChart data={categoryData} />
             )}
           </div>
-        </div> */}
+        </div>
 
         {/* Top Category */}
         {topCategory && (
           <div className="top-category-section">
             <h2 className="section-title">
-              <PieChart size={24} />
+              <Trophy size={24} />
               Top Spending Category
             </h2>
             <div className="top-category-card">
@@ -882,10 +839,85 @@ import './Analytics.css';
         </div>
       </div>
 
-      {/* Modals */}
-      
+      {/* Logout Modal */}
+      {showLogoutModal && (
+        <div className="game-modal-overlay" onClick={() => setShowLogoutModal(false)}>
+          <div className="game-modal">
+            <button className="game-modal-close" onClick={() => setShowLogoutModal(false)}>
+              <span style={{ fontSize: '24px' }}>×</span>
+            </button>
+            <div className="game-modal-header">
+              <div className="modal-mascot">👋</div>
+              <h3 className="game-modal-title">Leave so soon?</h3>
+            </div>
+
+            <div className="logout-modal-content">
+              <p className="modal-description">Your progress will be saved. Come back soon!</p>
+              
+              <div style={{ 
+                display: 'flex', 
+                gap: '12px',
+                padding: '16px',
+                background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                borderRadius: '12px',
+                marginBottom: '24px'
+              }}>
+                <div style={{ flex: 1, textAlign: 'center' }}>
+                  <div style={{ fontSize: '24px' }}>⭐</div>
+                  <div style={{ fontSize: '14px', fontWeight: '600' }}>Level {level}</div>
+                </div>
+                <div style={{ flex: 1, textAlign: 'center' }}>
+                  <div style={{ fontSize: '24px' }}>💰</div>
+                  <div style={{ fontSize: '14px', fontWeight: '600' }}>{coins} Coins</div>
+                </div>
+                <div style={{ flex: 1, textAlign: 'center' }}>
+                  <div style={{ fontSize: '24px' }}>🔥</div>
+                  <div style={{ fontSize: '14px', fontWeight: '600' }}>{streak} Days</div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button
+                  onClick={() => setShowLogoutModal(false)}
+                  style={{
+                    flex: 1,
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    border: '2px solid rgba(255, 255, 255, 0.3)',
+                    color: 'white',
+                    padding: '14px',
+                    borderRadius: '12px',
+                    cursor: 'pointer',
+                    fontWeight: '600',
+                    fontSize: '16px'
+                  }}
+                >
+                  Stay
+                </button>
+                <button
+                  onClick={confirmLogout}
+                  style={{
+                    flex: 1,
+                    background: 'linear-gradient(135deg, #f093fb, #f5576c)',
+                    border: 'none',
+                    color: 'white',
+                    padding: '14px',
+                    borderRadius: '12px',
+                    cursor: 'pointer',
+                    fontWeight: '600',
+                    fontSize: '16px'
+                  }}
+                >
+                  Logout
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Budget Modal */}
       {showBudgetModal && (
-        <div className="game-modal-overlay" onClick={(e) => e.target.className === 'game-modal-overlay' && setShowBudgetModal(false)}>
+        <div className="game-modal-overlay" onClick={() => setShowBudgetModal(false)}>
           <div className="game-modal">
             <button className="game-modal-close" onClick={() => setShowBudgetModal(false)}>
               <span style={{ fontSize: '24px' }}>×</span>
@@ -914,8 +946,9 @@ import './Analytics.css';
         </div>
       )}
 
+      {/* Goals Modal */}
       {showGoalsModal && (
-        <div className="game-modal-overlay" onClick={(e) => e.target.className === 'game-modal-overlay' && setShowGoalsModal(false)}>
+        <div className="game-modal-overlay" onClick={() => setShowGoalsModal(false)}>
           <div className="game-modal">
             <button className="game-modal-close" onClick={() => setShowGoalsModal(false)}>
               <span style={{ fontSize: '24px' }}>×</span>
@@ -943,6 +976,53 @@ import './Analytics.css';
           </div>
         </div>
       )}
+
+      <style jsx>{`
+        .chart-mode-btn {
+          padding: 10px 20px;
+          border-radius: 12px;
+          border: 2px solid rgba(255, 255, 255, 0.73);
+          background: rgba(255, 255, 255, 0.05);
+          color: white;
+          cursor: pointer;
+          font-weight: 600;
+          transition: all 0.3s ease;
+        }
+
+        .chart-mode-btn.active {
+          background: linear-gradient(135deg, #667eea, #ae8ad3ff);
+          border-color: transparent;
+          transform: scale(1.05);
+        }
+
+        .chart-mode-btn:hover {
+          background: rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-description {
+          margin-bottom: 24px;
+          color: #ffffffff;
+          text-align: center;
+        }
+
+        .game-submit-btn {
+          width: 100%;
+          background: linear-gradient(135deg, #cd7bedff, #ebed89ff);
+          border: none;
+          color: white;
+          padding: 14px;
+          border-radius: 12px;
+          cursor: pointer;
+          fontWeight: 600;
+          fontSize: 16px;
+          transition: all 0.3s ease;
+        }
+
+        .game-submit-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(234, 238, 255, 0.4);
+        }
+      `}</style>
     </div>
   );
 };
