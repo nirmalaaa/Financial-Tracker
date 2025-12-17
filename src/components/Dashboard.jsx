@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, TrendingUp, TrendingDown, Edit2, Trash2, X, DollarSign, Calendar, Tag, FileText, Sparkles, Zap, Trophy, Target, Flame, Star, Award, CheckCircle, AlertCircle, Gift, Coins, PiggyBank, Settings, BarChart3, Activity } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './Dashboard.css';
+import Tutorial from './Tutorial';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -16,12 +17,41 @@ const Dashboard = () => {
   const [celebrationText, setCelebrationText] = useState('');
   const [deleteId, setDeleteId] = useState(null);
   const [editingId, setEditingId] = useState(null);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  // Tutorial State
+  const [showTutorial, setShowTutorial] = useState(false);
+
+  // Check tutorial on mount - AUTO MUNCUL!
+  useEffect(() => {
+    const hasSeenTutorial = localStorage.getItem('financequest_tutorial_done');
+    console.log('🎯 Tutorial Check:', hasSeenTutorial ? 'Already seen' : 'NEW USER - SHOW TUTORIAL!');
+    
+    if (!hasSeenTutorial) {
+      // Delay untuk kasih waktu DOM render
+      const timer = setTimeout(() => {
+        console.log('✨ Showing tutorial now!');
+        setShowTutorial(true);
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, []);
   
   // Gamification State
   const [level, setLevel] = useState(1);
   const [xp, setXp] = useState(0);
-  const [coins, setCoins] = useState(100);
-  const [streak, setStreak] = useState(3);
+  // const [coins, setCoins] = useState(100);
+  const [coins, setCoins] = useState(() => {
+    const stored = localStorage.getItem('coins');
+    return stored !== null ? Number(stored) : 100; // Default 100 untuk user baru
+  });
+
+  const [streak, setStreak] = useState(() => {
+    const stored = localStorage.getItem('streak');
+    return stored !== null ? Number(stored) : 0;
+  });
+  const [lastLoginDate, setLastLoginDate] = useState(null);
   const [hearts, setHearts] = useState(5);
   const [mascotMood, setMascotMood] = useState('happy');
   const [avatarLevel, setAvatarLevel] = useState(1);
@@ -62,13 +92,19 @@ const Dashboard = () => {
   const xpProgress = (xp / xpForNextLevel) * 100;
 
   const categoryKeywords = {
-    'Food': ['makan', 'food', 'resto', 'restaurant', 'warung', 'cafe', 'kopi', 'nasi', 'ayam', 'soto', 'bakso', 'mie'],
-    'Transport': ['grab', 'gojek', 'taxi', 'uber', 'bensin', 'parkir', 'tol', 'busway', 'kereta', 'commuter'],
+    'Food': ['makan', 'food', 'resto', 'restaurant', 'warung', 'cafe', 'kopi', 'nasi', 'ayam', 'soto', 'bakso', 'mie', 'sate padang', 'mam'],
+    'Transport': ['grab', 'grep', 'gojek', 'taxi', 'uber', 'bensin', 'parkir', 'tol', 'busway', 'kereta', 'commuter'],
     'Shopping': ['beli', 'belanja', 'shop', 'tokopedia', 'shopee', 'lazada', 'mall', 'toko'],
     'Utilities': ['pulsa', 'listrik', 'air', 'wifi', 'internet', 'token', 'pln'],
-    'Entertainment': ['nonton', 'bioskop', 'game', 'spotify', 'netflix', 'youtube', 'concert', 'karaoke'],
-    'Health': ['dokter', 'rumah sakit', 'obat', 'apotek', 'vitamin', 'medical', 'hospital'],
-    'Education': ['buku', 'kursus', 'course', 'sekolah', 'kuliah', 'udemy', 'bootcamp'],
+    'Entertainment': ['nonton', 'bioskop', 'game', 'spotify', 'netflix', 'youtube', 'concert', 'karaoke', 'k-pop', 'korea drama', 'k-drama', 'viu', 'manga', 'manhwa', 'anime'],
+    'Health': ['dokter', 'rumah sakit', 'obat', 'apotek', 'vitamin', 'medical', 'hospital', 'kanker', 'demam', 'batuk'],
+    'Education': ['belajar', 'buku', 'kursus', 'les ', 'course', 'sekolah', 'kuliah', 'udemy', 'bootcamp', 'webinar'],
+    'Salary': ['gaji', 'upah', 'gaji bulanan', 'gaji harian', 'payroll', 'slip gaji', 'salary'],
+    'Freelance': ['freelance', 'freelancer', 'proyek', 'project', 'client', 'fee', 'honor', 'jasa', 'komisi jasa'],
+    'Business': ['usaha', 'bisnis', 'penjualan', 'omzet', 'laba', 'profit', 'pendapatan usaha', 'reseller', 'dropship'],
+    'Investment': ['investasi', 'dividen', 'bunga', 'return', 'imbal hasil', 'saham', 'reksadana', 'crypto', 'deposito', 'deposit', 'obligasi'],
+    'Gift': ['hadiah', 'gift', 'pemberian', 'uang hadiah', 'kado', 'angpao', 'thr', 'tehaer', 'sumbangan'],
+    'Bonus': ['bonus', 'insentif', 'reward', 'komisi', 'tunjangan', 'uang lembur', 'performance bonus', 'bonus kantor'],
     'Other': []
   };
 
@@ -94,6 +130,86 @@ const Dashboard = () => {
     if (level >= 5) return 'Savings Expert';
     return 'Money Starter';
   };
+
+  useEffect(() => {
+  const sync = () => {
+    const stored = localStorage.getItem('coins');
+    if (stored !== null) setCoins(Number(stored));
+  };
+
+  sync();
+  // window.addEventListener('storage', sync);
+  return () => window.removeEventListener('storage', sync);
+}, []);
+
+
+  useEffect(() => {
+    localStorage.setItem('coins', coins.toString());
+  }, [coins]);
+
+
+useEffect(() => {
+  const milestones = {
+    10: { coins: 20 },
+    50: { coins: 50, hearts: 1 },
+    100: { coins: 100, hearts: 1 },
+    200: { coins: 200, hearts: 2 },
+  };
+
+  const lastRewarded =
+    Number(localStorage.getItem('lastStreakReward')) || 0;
+
+  if (milestones[streak] && streak > lastRewarded) {
+    const reward = milestones[streak];
+
+    if (reward.coins) {
+      setCoins(prev => prev + reward.coins);
+    }
+
+    if (reward.hearts) {
+      setHearts(prev => Math.min(prev + reward.hearts, 5));
+    }
+
+    localStorage.setItem('lastStreakReward', streak.toString());
+
+    showCelebrationModal(
+      `🔥 ${streak} Day Streak!
+       +${reward.coins || 0} Coins
+       ${reward.hearts ? `+${reward.hearts} ❤️` : ''}`
+    );
+  }
+}, [streak]);
+
+
+useEffect(() => {
+  const today = new Date().toDateString();
+  const storedLastLogin = localStorage.getItem('lastLoginDate');
+
+  if (!storedLastLogin) {
+    // login pertama
+    setStreak(1);
+    localStorage.setItem('lastLoginDate', today);
+    return;
+  }
+
+  if (storedLastLogin === today) {
+    // sudah login hari ini → DO NOTHING
+    return;
+  }
+
+  const diffDays =
+    (new Date(today) - new Date(storedLastLogin)) / 86400000;
+
+  if (diffDays === 1) {
+    setStreak(prev => prev + 1);
+  } else {
+    setStreak(1);
+  }
+
+  localStorage.setItem('lastLoginDate', today);
+}, []);
+
+
 
   useEffect(() => {
     const thisMonthExpenses = transactions.filter(t => {
@@ -173,6 +289,7 @@ const Dashboard = () => {
     setTimeout(() => setFloatingCoins([]), 2000);
   };
 
+  
   const showCelebrationModal = (text) => {
     setCelebrationText(text);
     setShowCelebration(true);
@@ -199,7 +316,7 @@ const Dashboard = () => {
       if (quest.id === questId && !quest.completed) {
         const newProgress = Math.min(quest.progress + increment, quest.target);
         if (newProgress >= quest.target && !quest.completed) {
-          setCoins(coins + quest.reward);
+          setCoins(prev => prev + quest.reward);
           addXP(quest.reward / 2, 'quest');
           showCelebrationModal(`✅ Quest Complete! +${quest.reward} coins!`);
           return { ...quest, progress: quest.target, completed: true };
@@ -211,15 +328,27 @@ const Dashboard = () => {
   };
 
   const checkBudgetWarning = (category, amount) => {
-    if (budgets[category]) {
-      const newSpent = budgets[category].spent + amount;
-      const percentage = (newSpent / budgets[category].limit) * 100;
-      
-      if (percentage >= 90) {
-        showCelebrationModal(`⚠️ Warning! ${category} budget at ${percentage.toFixed(0)}%!`);
-        setMascotMood('sad');
-        setTimeout(() => setMascotMood('happy'), 3000);
-      }
+    if (!budgets[category]) return;
+
+    const newSpent = budgets[category].spent + amount;
+    const percentage = (newSpent / budgets[category].limit) * 100;
+
+    // 🔴 OVER 90% → HEART BERKURANG
+    if (percentage > 90) {
+      setHearts(prev => Math.max(prev - 1, 0));
+
+      showCelebrationModal(
+        `💔 Budget ${category} over ${percentage.toFixed(0)}%! Heart -1`
+      );
+
+      setMascotMood('sad');
+      setTimeout(() => setMascotMood('happy'), 3000);
+
+    // 🟡 Warning ringan (opsional)
+    } else if (percentage >= 80) {
+      showCelebrationModal(
+        `⚠️ Warning! ${category} budget at ${percentage.toFixed(0)}%`
+      );
     }
   };
 
@@ -236,20 +365,30 @@ const Dashboard = () => {
       createdAt: new Date().toISOString()
     };
 
-    if (editingId) {
-      setTransactions(prev => prev.map(t => t.id === editingId ? newTransaction : t));
+        if (editingId) {
+      setTransactions(prev =>
+        prev.map(t => t.id === editingId ? newTransaction : t)
+      );
+
       addXP(5, 'edit');
-      setCoins(coins + 5);
+
+      // ⬇️ EDIT = BIAYA KECIL
+      setCoins(prev => Math.max(prev - 2, 0));
+
     } else {
       setTransactions(prev => [newTransaction, ...prev]);
+
       addXP(15, 'add');
-      setCoins(coins + 10);
+
+      // ⬆️ ADD = REWARD
+      setCoins(prev => prev + 10);
+
       updateQuestProgress(1, 1);
-      
+
       if (newTransaction.type === 'expense') {
         checkBudgetWarning(newTransaction.category, newTransaction.amount);
       }
-      
+
       setMascotMood('excited');
       setTimeout(() => setMascotMood('happy'), 2000);
     }
@@ -283,6 +422,12 @@ const Dashboard = () => {
     setShowModal(true);
   };
 
+  const confirmLogout = () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.replace('/');
+  };
+
   const confirmDelete = (id) => {
     setDeleteId(id);
     setShowDeleteModal(true);
@@ -293,12 +438,16 @@ const Dashboard = () => {
     setShowDeleteModal(false);
     setDeleteId(null);
     addXP(3, 'delete');
-    setCoins(coins + 3);
+    setCoins(coins - 5);
   };
 
   const handleLogout = () => {
-    navigate('/');
+    localStorage.clear(); // atau removeItem('token')
+    sessionStorage.clear();
+
+    window.location.replace('/');
   };
+
 
   const goToAnalytics = () => {
     navigate('/analytics', { 
@@ -411,9 +560,24 @@ const Dashboard = () => {
             <span className="coin-icon">💰</span>
             <span className="coin-amount">{coins}</span>
           </div>
-          <button className="logout-btn-top" onClick={handleLogout}>
+          <button 
+            className="logout-btn-top" 
+            onClick={() => {
+              localStorage.removeItem('financequest_tutorial_done');
+              setShowTutorial(true);
+            }}
+            style={{ marginRight: '10px', background: '#667eea', fontSize: '18px' }}
+            title="Restart Tutorial"
+          >
+            📚
+          </button>
+          <button
+            className="logout-btn-top"
+            onClick={() => setShowLogoutModal(true)}
+          >
             Exit
           </button>
+
         </div>
       </div>
 
@@ -659,7 +823,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Modals remain the same... */}
+      {/* ALL MODALS */}
       {showModal && (
         <div className="game-modal-overlay" onClick={(e) => e.target.className === 'game-modal-overlay' && resetForm()}>
           <div className="game-modal">
@@ -670,7 +834,6 @@ const Dashboard = () => {
               <div className="modal-mascot">✨</div>
               <h3 className="game-modal-title">{editingId ? 'Edit Transaction' : 'Add Transaction'}</h3>
             </div>
-
             <div className="game-form">
               <div className="type-toggle">
                 <button
@@ -686,7 +849,6 @@ const Dashboard = () => {
                   💰 Income
                 </button>
               </div>
-
               <div className="game-input-group">
                 <label className="game-label">💵 Amount</label>
                 <input
@@ -697,7 +859,6 @@ const Dashboard = () => {
                   onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
                 />
               </div>
-
               <div className="game-input-group">
                 <label className="game-label">📝 Description</label>
                 <input
@@ -717,7 +878,6 @@ const Dashboard = () => {
                   </div>
                 )}
               </div>
-
               <div className="game-input-group">
                 <label className="game-label">🏷️ Category</label>
                 <select
@@ -731,7 +891,6 @@ const Dashboard = () => {
                   ))}
                 </select>
               </div>
-
               <div className="game-input-group">
                 <label className="game-label">📅 Date</label>
                 <input
@@ -741,7 +900,6 @@ const Dashboard = () => {
                   onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
                 />
               </div>
-
               <button className="game-submit-btn" onClick={handleSubmit}>
                 <span>{editingId ? 'Update' : 'Add'} Transaction</span>
                 <span className="submit-reward">+{editingId ? '5' : '15'} XP</span>
@@ -751,7 +909,6 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Budget Settings Modal */}
       {showBudgetModal && (
         <div className="game-modal-overlay" onClick={(e) => e.target.className === 'game-modal-overlay' && setShowBudgetModal(false)}>
           <div className="game-modal">
@@ -762,7 +919,6 @@ const Dashboard = () => {
               <div className="modal-mascot">💰</div>
               <h3 className="game-modal-title">Set Monthly Budget</h3>
             </div>
-
             <div className="game-form">
               {Object.entries(budgets).map(([category, data]) => (
                 <div key={category} className="game-input-group">
@@ -779,7 +935,6 @@ const Dashboard = () => {
                   </div>
                 </div>
               ))}
-
               <button className="game-submit-btn" onClick={() => setShowBudgetModal(false)}>
                 <span>Save Budget</span>
                 <span className="submit-reward">+5 XP</span>
@@ -789,7 +944,6 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Add Savings Goal Modal */}
       {showGoalsModal && (
         <div className="game-modal-overlay" onClick={(e) => e.target.className === 'game-modal-overlay' && setShowGoalsModal(false)}>
           <div className="game-modal">
@@ -800,28 +954,15 @@ const Dashboard = () => {
               <div className="modal-mascot">🎯</div>
               <h3 className="game-modal-title">Add Savings Goal</h3>
             </div>
-
             <div className="game-form">
               <div className="game-input-group">
                 <label className="game-label">🎁 Goal Name</label>
-                <input
-                  type="text"
-                  className="game-input"
-                  placeholder="New Laptop, Vacation, etc."
-                  id="goalName"
-                />
+                <input type="text" className="game-input" placeholder="New Laptop, Vacation, etc." id="goalName" />
               </div>
-
               <div className="game-input-group">
                 <label className="game-label">💰 Target Amount</label>
-                <input
-                  type="number"
-                  className="game-input"
-                  placeholder="5000000"
-                  id="goalTarget"
-                />
+                <input type="number" className="game-input" placeholder="5000000" id="goalTarget" />
               </div>
-
               <div className="game-input-group">
                 <label className="game-label">🎨 Choose Icon</label>
                 <div className="icon-picker">
@@ -839,7 +980,6 @@ const Dashboard = () => {
                   ))}
                 </div>
               </div>
-
               <button 
                 className="game-submit-btn" 
                 onClick={() => {
@@ -847,7 +987,6 @@ const Dashboard = () => {
                   const target = document.getElementById('goalTarget').value;
                   const selectedIcon = document.querySelector('.icon-picker-btn.selected');
                   const icon = selectedIcon ? selectedIcon.textContent : '🎯';
-                  
                   if (name && target) {
                     addGoal(name, target, icon);
                     setShowGoalsModal(false);
@@ -866,7 +1005,6 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Contribute to Goal Modal */}
       {showContributeModal && selectedGoal && (
         <div className="game-modal-overlay" onClick={(e) => e.target.className === 'game-modal-overlay' && setShowContributeModal(false)}>
           <div className="game-modal contribute-modal">
@@ -877,33 +1015,17 @@ const Dashboard = () => {
               <div className="modal-mascot">{selectedGoal.icon}</div>
               <h3 className="game-modal-title">Add to {selectedGoal.name}</h3>
               <div className="contribute-info">
-                <div className="contribute-current">
-                  Current: Rp {selectedGoal.current.toLocaleString('id-ID')}
-                </div>
-                <div className="contribute-target">
-                  Target: Rp {selectedGoal.target.toLocaleString('id-ID')}
-                </div>
-                <div className="contribute-remaining">
-                  Remaining: Rp {(selectedGoal.target - selectedGoal.current).toLocaleString('id-ID')}
-                </div>
+                <div className="contribute-current">Current: Rp {selectedGoal.current.toLocaleString('id-ID')}</div>
+                <div className="contribute-target">Target: Rp {selectedGoal.target.toLocaleString('id-ID')}</div>
+                <div className="contribute-remaining">Remaining: Rp {(selectedGoal.target - selectedGoal.current).toLocaleString('id-ID')}</div>
               </div>
             </div>
-
             <div className="game-form">
               <div className="game-input-group">
                 <label className="game-label">💰 Contribution Amount</label>
-                <input
-                  type="number"
-                  className="game-input"
-                  placeholder="Enter amount"
-                  id="contributeAmount"
-                  max={selectedGoal.target - selectedGoal.current}
-                />
-                <div className="budget-helper">
-                  Max: Rp {(selectedGoal.target - selectedGoal.current).toLocaleString('id-ID')}
-                </div>
+                <input type="number" className="game-input" placeholder="Enter amount" id="contributeAmount" max={selectedGoal.target - selectedGoal.current} />
+                <div className="budget-helper">Max: Rp {(selectedGoal.target - selectedGoal.current).toLocaleString('id-ID')}</div>
               </div>
-
               <button className="game-submit-btn" onClick={handleContribute}>
                 <span>Contribute</span>
                 <span className="submit-reward">💰 Save Money</span>
@@ -913,26 +1035,20 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Delete Modal */}
       {showDeleteModal && (
         <div className="game-modal-overlay">
           <div className="game-delete-modal">
             <div className="delete-mascot">😢</div>
             <h3 className="delete-modal-title">Delete Transaction?</h3>
-            <p className="delete-modal-text">This action cannot be undone</p>
+            <p className="delete-modal-text">Are you sure want to detele transaction? If you delete, your coins will be -5</p>
             <div className="delete-modal-actions">
-              <button className="delete-modal-btn cancel" onClick={() => setShowDeleteModal(false)}>
-                Cancel
-              </button>
-              <button className="delete-modal-btn confirm" onClick={handleDelete}>
-                Delete
-              </button>
+              <button className="delete-modal-btn cancel" onClick={() => setShowDeleteModal(false)}>Cancel</button>
+              <button className="delete-modal-btn confirm" onClick={handleDelete}>Delete</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Celebration Modal */}
       {showCelebration && (
         <div className="celebration-overlay">
           <div className="celebration-modal">
@@ -951,6 +1067,39 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {showLogoutModal && (
+        <div className="logout-overlay">
+          <div className="logout-box">
+            <p>Are you sure you want to logout?</p>
+
+            <button onClick={() => setShowLogoutModal(false)}>
+              Cancel
+            </button>
+
+            <button onClick={confirmLogout}>
+              Yes, Logout
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* TUTORIAL - AUTO MUNCUL UNTUK NEW USER! */}
+      {showTutorial && (
+        <Tutorial 
+          onComplete={() => {
+            console.log('✅ Tutorial COMPLETED!');
+            localStorage.setItem('financequest_tutorial_done', 'true');
+            setShowTutorial(false);
+            showCelebrationModal('🎉 Tutorial Complete! Welcome aboard!');
+          }}
+          onSkip={() => {
+            console.log('⏭️ Tutorial SKIPPED!');
+            localStorage.setItem('financequest_tutorial_done', 'true');
+            setShowTutorial(false);
+          }}
+        />
       )}
     </div>
   );

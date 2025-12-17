@@ -3,28 +3,39 @@ import { TrendingUp, TrendingDown, Activity, AlertCircle, CheckCircle, Zap, Targ
 import { useNavigate, useLocation } from 'react-router-dom';
 import './Analytics.css';
 
-const Analytics = () => {
+  const Analytics = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
   // Get data from navigation state
+  const storedTransactions =
+    JSON.parse(localStorage.getItem('transactions')) || [];
+
+  const storedBudgets =
+    JSON.parse(localStorage.getItem('budgets')) || {};
+
   const data = location.state || {
-    transactions: [],
-    budgets: {},
+    transactions: storedTransactions,
+    budgets: storedBudgets,
     level: 1,
     xp: 0,
-    coins: 100,
-    streak: 3,
+    // coins: 100,
+    streak: 0,
     hearts: 5
   };
 
+    
   const [transactions] = useState(data.transactions || []);
   const [budgets] = useState(data.budgets || {});
   const [level] = useState(data.level || 1);
   const [xp] = useState(data.xp || 0);
-  const [coins] = useState(data.coins || 100);
-  const [streak] = useState(data.streak || 3);
-  const [hearts] = useState(data.hearts || 5);
+  const [coins, setCoins] = useState(() => {
+  const stored = localStorage.getItem('coins');
+    return stored !== null ? Number(stored) : 0;
+  });
+  const [streak, setStreak] = useState(0);
+  const [hearts, setHearts] = useState(data.hearts || 5);
+  const [chartMode, setChartMode] = useState('monthly'); // 'daily' | 'monthly'
 
   const [healthScore, setHealthScore] = useState(0);
   const [scoreFactors, setScoreFactors] = useState({
@@ -39,6 +50,50 @@ const Analytics = () => {
   const [monthlyData, setMonthlyData] = useState([]);
   const [showBudgetModal, setShowBudgetModal] = useState(false);
   const [showGoalsModal, setShowGoalsModal] = useState(false);
+  const [lastLoginDate, setLastLoginDate] = useState(
+  localStorage.getItem('lastLoginDate')
+  );
+
+    const getDailyDataThisMonth = () => {
+    if (!Array.isArray(transactions)) return [];
+
+    const now = new Date();
+    const month = now.getMonth();
+    const year = now.getFullYear();
+
+    const daily = {};
+
+    transactions.forEach(t => {
+      if (!t || t.type !== 'expense' || !t.date) return;
+
+      const d = new Date(t.date);
+      if (isNaN(d)) return;
+
+      if (d.getMonth() !== month || d.getFullYear() !== year) return;
+
+      const day = d.getDate(); // 1 - 31
+      daily[day] = (daily[day] || 0) + Number(t.amount || 0);
+    });
+
+    return Object.entries(daily)
+      .map(([day, amount]) => [Number(day), amount])
+      .sort((a, b) => a[0] - b[0]);
+  };
+
+  
+  const confirmLogout = () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.replace('/');
+  };
+
+
+  const chartData =
+  chartMode === 'monthly'
+    ? monthlyData
+    : Array.isArray(transactions)
+      ? getDailyDataThisMonth()
+      : [];
 
   const xpForNextLevel = level * 100;
   const xpProgress = (xp / xpForNextLevel) * 100;
@@ -59,6 +114,85 @@ const Analytics = () => {
     return 'Money Starter';
   };
 
+  useEffect(() => {
+    const stored = localStorage.getItem('coins');
+    if (stored !== null) {
+      setCoins(Number(stored));
+    }
+  }, []);
+  
+  useEffect(() => {
+    const syncCoins = () => {
+      setCoins(Number(localStorage.getItem('coins')) || 0);
+    };
+
+    window.addEventListener('storage', syncCoins);
+    return () => window.removeEventListener('storage', syncCoins);
+  }, []);
+
+  useEffect(() => {
+  const milestones = {
+    10: { coins: 20 },
+    50: { coins: 50, hearts: 1 },
+    100: { coins: 100, hearts: 1 },
+    200: { coins: 200, hearts: 2 },
+  };
+
+  const lastRewarded =
+    Number(localStorage.getItem('lastStreakReward')) || 0;
+
+  if (milestones[streak] && streak > lastRewarded) {
+    const reward = milestones[streak];
+
+    if (reward.coins) {
+      setCoins(prev => prev + reward.coins);
+    }
+
+    if (reward.hearts) {
+      setHearts(prev => Math.min(prev + reward.hearts, 5));
+    }
+
+    localStorage.setItem('lastStreakReward', streak.toString());
+
+    showCelebrationModal(
+      `🔥 ${streak} Day Streak!
+       +${reward.coins || 0} Coins
+       ${reward.hearts ? `+${reward.hearts} ❤️` : ''}`
+    );
+  }
+}, [streak]);
+
+
+  useEffect(() => {
+    const today = new Date().toDateString();
+      if (!lastLoginDate) {
+        // login pertama
+        setStreak(1);
+      } else {
+        const last = new Date(lastLoginDate).toDateString();
+  
+        if (today === last) {
+          // login di hari yang sama → streak tetap
+          return;
+        }
+  
+        const diffDays =
+          (new Date(today) - new Date(last)) / 86400000;
+  
+        if (diffDays === 1) {
+          // login berurutan
+          setStreak(prev => prev + 1);
+        } else {
+          // bolong → reset streak
+          setStreak(1);
+        }
+      }
+  
+      setLastLoginDate(today);
+      localStorage.setItem('lastLoginDate', today);
+    }, []);
+
+
   // Calculate Financial Health Score
   useEffect(() => {
     calculateHealthScore();
@@ -66,44 +200,54 @@ const Analytics = () => {
   }, [transactions, budgets]);
 
   const calculateHealthScore = () => {
-    const thisMonth = new Date().getMonth();
-    const thisYear = new Date().getFullYear();
-    
+    const now = new Date();
+    const thisMonth = now.getMonth();
+    const thisYear = now.getFullYear();
+
     const thisMonthTx = transactions.filter(t => {
+      if (!t?.date) return false;
       const date = new Date(t.date);
-      return date.getMonth() === thisMonth && date.getFullYear() === thisYear;
+      return (
+        !isNaN(date) &&
+        date.getMonth() === thisMonth &&
+        date.getFullYear() === thisYear
+      );
     });
 
     const totalIncome = thisMonthTx
       .filter(t => t.type === 'income')
-      .reduce((sum, t) => sum + t.amount, 0);
+      .reduce((sum, t) => sum + Number(t.amount || 0), 0);
 
     const totalExpense = thisMonthTx
       .filter(t => t.type === 'expense')
-      .reduce((sum, t) => sum + t.amount, 0);
+      .reduce((sum, t) => sum + Number(t.amount || 0), 0);
 
-    // Factor 1: Budget Adherence (30 points)
+    // ===== Budget Adherence =====
     let budgetScore = 0;
-    const totalBudget = Object.values(budgets).reduce((sum, b) => sum + (b.limit || 0), 0);
-    const totalSpent = Object.values(budgets).reduce((sum, b) => sum + (b.spent || 0), 0);
+    const totalBudget = Object.values(budgets || {})
+      .reduce((sum, b) => sum + Number(b.limit || 0), 0);
+
+    const totalSpent = Object.values(budgets || {})
+      .reduce((sum, b) => sum + Number(b.spent || 0), 0);
+
     if (totalBudget > 0) {
-      const adherence = 1 - (totalSpent / totalBudget);
+      const adherence = 1 - totalSpent / totalBudget;
       budgetScore = Math.max(0, Math.min(30, adherence * 30 + 15));
     }
 
-    // Factor 2: Savings Rate (30 points)
+    // ===== Savings Rate =====
     let savingsScore = 0;
     if (totalIncome > 0) {
       const savingsRate = (totalIncome - totalExpense) / totalIncome;
       savingsScore = Math.max(0, Math.min(30, savingsRate * 50));
     }
 
-    // Factor 3: Spending Consistency (20 points)
+    // ===== Consistency =====
     const dailySpending = calculateDailySpending(thisMonthTx);
     const consistency = calculateConsistency(dailySpending);
     const consistencyScore = consistency * 20;
 
-    // Factor 4: Emergency Fund / Level Progress (20 points)
+    // ===== Level =====
     const levelScore = Math.min(20, (level / 20) * 20);
 
     const factors = {
@@ -114,9 +258,9 @@ const Analytics = () => {
     };
 
     const totalScore = Math.round(
-      factors.budgetAdherence + 
-      factors.savingsRate + 
-      factors.spendingConsistency + 
+      factors.budgetAdherence +
+      factors.savingsRate +
+      factors.spendingConsistency +
       factors.emergencyFund
     );
 
@@ -130,7 +274,7 @@ const Analytics = () => {
       .filter(t => t.type === 'expense')
       .forEach(t => {
         const date = new Date(t.date).toDateString();
-        daily[date] = (daily[date] || 0) + t.amount;
+        daily[date] = (daily[date] || 0) + Number(t.amount || 0);
       });
     return Object.values(daily);
   };
@@ -143,6 +287,11 @@ const Analytics = () => {
     const cv = avg > 0 ? stdDev / avg : 1;
     return Math.max(0, 1 - cv);
   };
+
+    const maxAmount = Math.max(
+       ...chartData.map(d => Number(d[1]) || 0),
+         1
+       );
 
   const calculateInsights = () => {
     const thisMonth = new Date().getMonth();
@@ -171,8 +320,8 @@ const Analytics = () => {
       return date.getMonth() === thisMonth - 1 && date.getFullYear() === thisYear && t.type === 'expense';
     });
 
-    const thisMonthTotal = thisMonthTx.reduce((sum, t) => sum + t.amount, 0);
-    const lastMonthTotal = lastMonthTx.reduce((sum, t) => sum + t.amount, 0);
+    const thisMonthTotal = thisMonthTx.reduce((sum, t) => sum + Number(t.amount || 0), 0);
+    const lastMonthTotal = lastMonthTx.reduce((sum, t) => sum + Number(t.amount || 0), 0);
 
     if (lastMonthTotal > 0) {
       const change = ((thisMonthTotal - lastMonthTotal) / lastMonthTotal) * 100;
@@ -225,7 +374,7 @@ const Analytics = () => {
     }
 
     if (topCategory && topCategory.amount > 0) {
-      const totalSpent = thisMonthTx.reduce((sum, t) => sum + t.amount, 0);
+      const totalSpent = thisMonthTx.reduce((sum, t) => sum + Number(t.amount || 0), 0);
       const percentage = (topCategory.amount / totalSpent) * 100;
       if (percentage > 40) {
         newInsights.push({
@@ -349,7 +498,21 @@ const Analytics = () => {
             <span className="coin-icon">💰</span>
             <span className="coin-amount">{coins}</span>
           </div>
-          <button className="logout-btn-top" onClick={handleLogout}>
+          <button 
+            className="logout-btn-top" 
+            onClick={() => {
+              localStorage.removeItem('financequest_tutorial_done');
+              setShowTutorial(true);
+            }}
+            style={{ marginRight: '10px', background: '#667eea', fontSize: '18px' }}
+            title="Restart Tutorial"
+          >
+            📚
+          </button>
+          <button
+            className="logout-btn-top"
+            onClick={() => setShowLogoutModal(true)}
+          >
             Exit
           </button>
         </div>
@@ -521,6 +684,114 @@ const Analytics = () => {
         </div>
 
         {/* Spending Chart */}
+          <div className="chart-section">
+            <h2 className="section-title">
+              <BarChart3 size={24} />
+              Spending Trend
+            </h2>
+
+            {/* Toggle */}
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
+              <button
+                onClick={() => setChartMode('daily')}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '16px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  background: chartMode === 'daily' ? '#667eea' : '#2a2a3d',
+                  color: 'white'
+                }}
+              >
+                Daily
+              </button>
+
+              <button
+                onClick={() => setChartMode('monthly')}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '16px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  background: chartMode === 'monthly' ? '#667eea' : '#2a2a3d',
+                  color: 'white'
+                }}
+              >
+                Monthly
+              </button>
+            </div>
+
+            <div className="chart-card">
+              {chartData.length > 0 ? (
+                <div
+                  className="simple-chart"
+                  style={{
+                    height: '260px',
+                    display: 'flex',
+                    alignItems: 'flex-end',
+                    gap: '12px'
+                  }}
+                >
+                  {chartData.map((item) => {
+                    const label = item?.[0];
+                    const amount = Number(item?.[1] || 0);
+                    const height = Math.max(
+                      12, // ⬅️ minimal 12% supaya kelihatan
+                      (amount / maxAmount) * 100
+                    );
+                    const isHighest = Number(amount) === maxAmount;
+
+                    return (
+                      <div
+                        key={`${chartMode}-${label}`}
+                        className="chart-bar-wrapper"
+                        style={{ textAlign: 'center', flex: 1 }}
+                      >
+                        <div
+                          className="chart-bar"
+                          style={{
+                            height: `${height}%`,
+                            background: isHighest
+                              ? 'linear-gradient(180deg, #ffb347, #ffcc33)'
+                              : 'linear-gradient(180deg, #667eea, #764ba2)',
+                            borderRadius: '6px',
+                            position: 'relative'
+                          }}
+                        >
+                          <div
+                            className="chart-value"
+                            style={{
+                              position: 'absolute',
+                              top: '-20px',
+                              fontSize: '12px',
+                              width: '100%',
+                              color: '#fff'
+                            }}
+                          >
+                            Rp {amount.toLocaleString('id-ID')}
+                          </div>
+                        </div>
+
+                        <div
+                          className="chart-label"
+                          style={{ marginTop: '6px', fontSize: '12px' }}
+                        >
+                          {chartMode === 'daily' ? `Day ${label}` : label}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="chart-empty">
+                  <div className="empty-icon">📊</div>
+                  <p>No spending data yet.</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+        {/* Spending Chart
         <div className="chart-section">
           <h2 className="section-title">
             <BarChart3 size={24} />
@@ -530,13 +801,20 @@ const Analytics = () => {
             {monthlyData.length > 0 ? (
               <div className="simple-chart">
                 {monthlyData.map(([month, amount]) => {
-                  const maxAmount = Math.max(...monthlyData.map(m => m[1]));
-                  const height = (amount / maxAmount) * 100;
+                  const maxAmount = Math.max(
+                    ...monthlyData.map(m => Number(m[1]) || 0),
+                    1 // ⬅️ anti divide by zero
+                  );
+
+                  const height = Math.max(
+                    5, // ⬅️ minimal kelihatan
+                    (Number(amount) / maxAmount) * 100
+                  );
                   return (
-                    <div key={month} className="chart-bar-wrapper">
+                    <div className="chart-bar-wrapper">
                       <div className="chart-bar" style={{ height: `${height}%` }}>
                         <div className="chart-value">
-                          Rp {(amount / 1000000).toFixed(1)}M
+                          Rp {(amount / 1_000_000).toFixed(1)}M
                         </div>
                       </div>
                       <div className="chart-label">{month}</div>
@@ -551,7 +829,7 @@ const Analytics = () => {
               </div>
             )}
           </div>
-        </div>
+        </div> */}
 
         {/* Top Category */}
         {topCategory && (
@@ -605,6 +883,7 @@ const Analytics = () => {
       </div>
 
       {/* Modals */}
+      
       {showBudgetModal && (
         <div className="game-modal-overlay" onClick={(e) => e.target.className === 'game-modal-overlay' && setShowBudgetModal(false)}>
           <div className="game-modal">
